@@ -5,7 +5,7 @@ import terser from '@rollup/plugin-terser';
 export default {
   input: 'src/reachy-mini-3d-card.js',
   output: {
-    file: 'reachy-mini-3d-card.js',
+    file: 'dist/reachy-mini-3d-card.js',
     format: 'iife',
     name: 'ReachyMini3DCard',
     sourcemap: true

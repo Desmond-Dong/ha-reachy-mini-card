@@ -37,15 +37,15 @@ jobs:
         run: |
           npm run build
           echo "Build completed successfully"
-          ls -la reachy-mini-3d-card.js
+          ls -la dist/
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: reachy-mini-3d-card
           path: |
-            reachy-mini-3d-card.js
-            reachy-mini-3d-card.js.map
+            dist/reachy-mini-3d-card.js
+            dist/reachy-mini-3d-card.js.map
           retention-days: 30
 
       - name: Commit built file to repository
@@ -53,7 +53,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add reachy-mini-3d-card.js reachy-mini-3d-card.js.map
+          git add dist/
           git diff --staged --quiet || git commit -m "chore: build reachy-mini-3d-card.js [skip ci]"
           git push
 
@@ -62,8 +62,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            reachy-mini-3d-card.js
-            reachy-mini-3d-card.js.map
+            dist/reachy-mini-3d-card.js
+            dist/reachy-mini-3d-card.js.map
           body: |
             ## Reachy Mini 3D Card ${{ github.ref_name }}
 
