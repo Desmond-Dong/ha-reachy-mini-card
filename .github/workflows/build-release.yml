@@ -54,20 +54,19 @@ jobs:
       - name: Create release package
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          mkdir -p release/reachy-mini-3d-card
-          cp dist/reachy-mini-3d-card.js release/reachy-mini-3d-card/
-          cp dist/reachy-mini-3d-card.js.map release/reachy-mini-3d-card/
-          cp -r dist/assets release/reachy-mini-3d-card/
-          cp -r dist/lib release/reachy-mini-3d-card/
-          cp hacs.json release/reachy-mini-3d-card/
-          cp README.md release/reachy-mini-3d-card/
-          cp LICENSE release/reachy-mini-3d-card/ 2>/dev/null || true
+          # 创建 release 目录，文件直接放在根目录（content_in_root: true）
+          mkdir -p release
+          cp dist/reachy-mini-3d-card.js release/
+          cp dist/reachy-mini-3d-card.js.map release/
+          cp -r dist/assets release/
+          cp -r dist/lib release/
           cd release
-          zip -r ../reachy-mini-3d-card.zip reachy-mini-3d-card/
+          zip -r ../reachy-mini-3d-card.zip .
           cd ..
           echo "Release package created:"
           ls -la reachy-mini-3d-card.zip
-          unzip -l reachy-mini-3d-card.zip | head -50
+          echo "Zip contents:"
+          unzip -l reachy-mini-3d-card.zip
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

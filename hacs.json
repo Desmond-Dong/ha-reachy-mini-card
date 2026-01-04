@@ -3,6 +3,6 @@
   "render_readme": true,
   "homeassistant": "2023.11.0",
   "filename": "reachy-mini-3d-card.js",
-  "zip_release": false,
-  "content_in_root": false
+  "zip_release": true,
+  "content_in_root": true
 }
