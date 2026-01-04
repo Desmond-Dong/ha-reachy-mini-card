@@ -55,18 +55,19 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           # 创建 release 目录，文件直接放在根目录（content_in_root: true）
+          # HACS 要求 zip 文件名与仓库名匹配
           mkdir -p release
           cp dist/reachy-mini-3d-card.js release/
           cp dist/reachy-mini-3d-card.js.map release/
           cp -r dist/assets release/
           cp -r dist/lib release/
           cd release
-          zip -r ../reachy-mini-3d-card.zip .
+          zip -r ../ha-reachy-mini-card.zip .
           cd ..
           echo "Release package created:"
-          ls -la reachy-mini-3d-card.zip
+          ls -la ha-reachy-mini-card.zip
           echo "Zip contents:"
-          unzip -l reachy-mini-3d-card.zip
+          unzip -l ha-reachy-mini-card.zip
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -93,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            reachy-mini-3d-card.zip
+            ha-reachy-mini-card.zip
             dist/reachy-mini-3d-card.js
           body: |
             ## Reachy Mini 3D Card ${{ github.ref_name }}
