@@ -677,10 +677,7 @@ if (!window.THREE) {
 
   console.log('Reachy Mini 3D Card registered successfully');
 
-  } catch (error) {
-    console.error('Error initializing Reachy Mini 3D Card:', error);
-  }
-})();
+  // 辅助函数
   async function loadScript(url) {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
@@ -708,5 +705,9 @@ if (!window.THREE) {
       html: window.html || ((strings, ...values) => ({ strings, values })),
       css: window.css || ((strings, ...values) => strings.join(''))
     };
+  }
+
+  } catch (error) {
+    console.error('Error initializing Reachy Mini 3D Card:', error);
   }
 })();
