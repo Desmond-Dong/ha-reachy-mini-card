@@ -14,6 +14,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export 3D model as GLTF
 - VR mode support
 
+## [1.0.4] - 2025-01-04
+
+### Fixed
+- 🐛 Fix card preview infinite loading spinner in dashboard editor
+- 🔧 Fix import.meta.url incompatibility in HACS environment
+- ✅ Add proper loading state management with visual indicator
+- 🛡️ Add null safety checks for all config properties
+- 🔄 Add retry logic for DOM container availability
+- 📦 Fix code structure - move helper functions inside IIFE
+- ⚡ Improve async initialization with proper error handling
+
+### Technical Details
+- Replace `import.meta.url` with compatible script detection
+- Add constructor to initialize component state
+- Use requestAnimationFrame for DOM readiness
+- Add try-catch blocks for Three.js initialization
+- Ensure _loaded state is set even on error
+
+## [1.0.1] - 2025-01-04
+
+### Fixed
+- 🐛 Fix card preview infinite loading spinner in dashboard editor
+- 🔧 Fix import.meta.url incompatibility in HACS environment
+- ✅ Add proper loading state management with visual indicator
+- 🛡️ Add null safety checks for all config properties
+- 🔄 Add retry logic for DOM container availability
+- 📦 Fix code structure - move helper functions inside IIFE
+- ⚡ Improve async initialization with proper error handling
+
+### Technical Details
+- Replace `import.meta.url` with compatible script detection
+- Add constructor to initialize component state
+- Use requestAnimationFrame for DOM readiness
+- Add try-catch blocks for Three.js initialization
+- Ensure _loaded state is set even on error
+
 ## [1.0.0] - 2025-01-04
 
 ### Added
