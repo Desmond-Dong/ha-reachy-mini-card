@@ -53,6 +53,9 @@ jobs:
           cp node_modules/three/build/three.core.js lib/three.core.js
           cp node_modules/three/examples/jsm/controls/OrbitControls.js lib/OrbitControls.js
           
+          # Fix OrbitControls.js import to use relative path
+          sed -i "s/from 'three'/from '.\/three.core.js'/g" lib/OrbitControls.js
+          
           echo "✅ Assets and lib copied"
           ls -la lib/
 
