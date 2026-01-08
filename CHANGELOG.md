@@ -13,6 +13,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Recording/playback of poses
 - Export 3D model as GLTF
 
+## [3.0.2] - 2025-01-08
+
+### Fixed
+- 🐛 修复 Three.js CDN 链接不存在的问题
+- 🐛 修复 'Failed to load Three.js' 错误
+- 🐛 修复卡片不在 HACS 选择器中显示的问题
+- 🐛 修复手动配置无法找到 Three.js 的问题
+
+### Changed
+- 📦 将 Three.js 完整打包到卡片文件中（从 15KB 增加到 755KB）
+- 🚫 不再依赖外部 CDN，Three.js 直接打包在卡片文件中
+- 🔧 修改 rollup.config.js，移除 external: ['three'] 配置
+- 🔧 在源代码中添加 Three.js 的 import 语句
+- 🔧 将 THREE 和 OrbitControls 暴露给 window 对象
+- 📝 添加 reachy-mini-desktop-app 到 .gitignore
+
+### Technical Details
+这个版本包含了完整的 Three.js 0.181.0 库，无需从外部加载，
+确保卡片在任何环境下都能正常工作。卡片文件大小从 15KB 增加到 755KB。
+
+## [3.0.1] - 2025-01-08
+
+### Fixed
+- 🐛 修复工作流文件中的旧命名
+- 📝 更新所有文档和示例配置
+
+### Changed
+- 🔧 更新 build-release.yml 工作流
+- 📝 更新 CHANGELOG.md
+
 ## [3.0.0] - 2025-01-08
 
 ### Breaking Changes
