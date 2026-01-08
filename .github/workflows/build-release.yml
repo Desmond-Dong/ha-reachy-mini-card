@@ -44,6 +44,8 @@ jobs:
         run: |
           echo "Copying assets and libraries..."
           mkdir -p lib
+          cp node_modules/urdf-loader/src/URDFClasses.js lib/URDFClasses.js
+          cp node_modules/urdf-loader/src/URDFDragControls.js lib/URDFDragControls.js
           cp node_modules/urdf-loader/src/URDFLoader.js lib/urdf-loader.js
           echo "✅ Assets and lib copied"
           ls -la lib/
