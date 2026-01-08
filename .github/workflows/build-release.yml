@@ -71,6 +71,11 @@ jobs:
           # Remove backup files
           rm -f lib/*.bak
           
+          # Verify all imports are fixed
+          echo "🔍 Verifying import statements..."
+          grep -n "from 'three'" lib/*.js || echo "✅ No 'from three' imports found"
+          grep -n "from './three.core.js'" lib/*.js | head -10 || echo "⚠️ No relative imports found"
+          
           echo "✅ Assets and lib copied"
           ls -la lib/
 
