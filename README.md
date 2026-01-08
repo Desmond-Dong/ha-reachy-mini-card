@@ -37,6 +37,19 @@ Connects directly to Reachy Mini daemon via WebSocket for ultra-low latency 3D v
 
 ### Step 1: Install via HACS
 
+#### Method 1: Custom Repository (Recommended)
+
+1. Open Home Assistant → **HACS** → **Frontend**
+2. Click the three dots menu (⋮) → **Custom repositories**
+3. Add repository: `https://github.com/Desmond-Dong/ha-reachy-mini-card`
+4. Category: **Plugin**
+5. Click **Add**
+6. Click the newly added repository
+7. Click **Download** → select latest version (v2.2.2)
+8. Wait for installation to complete
+
+#### Method 2: Explore & Download
+
 1. Open Home Assistant → **HACS** → **Frontend**
 2. Click **Explore & Download Repositories**
 3. Search for `Reachy Mini 3D Card`
