@@ -20,7 +20,15 @@ export default {
     terser({
       keep_classnames: true,
       keep_fnames: false,
-      // 保留必要的注释
+      compress: {
+        defaults: false,
+        // 禁用可能导致意外添加属性的优化
+        unsafe: false,
+        side_effects: false
+      },
+      mangle: {
+        properties: false
+      },
       format: {
         comments: /^!/ // 保留以 ! 开头的注释
       }
