@@ -13,6 +13,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Recording/playback of poses
 - Export 3D model as GLTF
 
+## [3.1.0] - 2025-01-08
+
+### Added
+- 🗜️ 为所有 JS 文件添加 gzip 压缩支持
+- ⚡ 自动在构建时创建 .gz 压缩版本
+- 📦 更新构建脚本和 GitHub Actions
+
+### Performance Improvements
+文件压缩效果（平均 76% 压缩率）：
+- ha-reachy-mini-card.js: 16KB → 4KB (75% 压缩)
+- lib/three.js: 355KB → 86KB (76% 压缩)
+- lib/OrbitControls.js: 38KB → 8KB (79% 压缩)
+- lib/urdf-loader.js: 19KB → 4.5KB (76% 压缩)
+- lib/URDFClasses.js: 12KB → 2.4KB (80% 压缩)
+- lib/URDFDragControls.js: 7KB → 1.7KB (76% 压缩)
+
+### Technical Details
+- 使用最高压缩级别 (-9)
+- 保留原始文件和压缩文件
+- Windows 使用 PowerShell 压缩
+- Linux/Mac 使用 gzip 命令
+- Web 服务器可以自动提供 gz 文件
+
+### Benefits
+1. 减小文件传输大小，提升加载速度
+2. 减少带宽消耗
+3. 符合现代 Web 性能优化最佳实践
+4. 浏览器自动解压，无需额外配置
+
 ## [3.0.4] - 2025-01-08
 
 ### Changed
