@@ -721,4 +721,14 @@
   // 注册主卡片
   customElements.define('ha-reachy-mini-card', ReachyMini3DCard);
 
+  // 注册到 window.customCards 以便在卡片选择器中显示
+  window.customCards = window.customCards || [];
+  window.customCards.push({
+    type: 'ha-reachy-mini-card',
+    name: 'Reachy Mini 3D Card',
+    description: '3D visualization of Reachy Mini robot',
+    preview: true,
+    documentationURL: 'https://github.com/Desmond-Dong/ha-reachy-mini-card',
+  });
+
 })();
