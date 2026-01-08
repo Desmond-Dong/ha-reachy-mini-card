@@ -4,10 +4,12 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-# Build outputs
+# Build outputs (keep main JS files for HACS)
 dist/
 build/
-*.js.map
+# Don't ignore the main built file
+!reachy-mini-3d-card.js
+!reachy-mini-3d-card.js.map
 *.min.js
 
 # Editor directories and files

@@ -38,23 +38,15 @@ jobs:
           echo "Building Reachy Mini 3D Card..."
           npm run build
           echo "Build completed successfully"
-          ls -la dist/
+          ls -la reachy-mini-3d-card.js
 
-      - name: Copy assets to dist
+      - name: Copy assets
         run: |
           echo "Copying assets and libraries..."
-          # 复制 assets 文件夹到 dist 目录
-          cp -r assets dist/
-          # 创建 lib 目录并复制 urdf-loader
-          mkdir -p dist/lib
-          cp node_modules/urdf-loader/src/URDFLoader.js dist/lib/urdf-loader.js
-          echo "✅ Assets and lib copied to dist/"
-          echo "📁 Dist contents:"
-          ls -la dist/
-          echo "📦 Assets:"
-          ls -la dist/assets/ | head -20
-          echo "📚 Libraries:"
-          ls -la dist/lib/
+          mkdir -p lib
+          cp node_modules/urdf-loader/src/URDFLoader.js lib/urdf-loader.js
+          echo "✅ Assets and lib copied"
+          ls -la lib/
 
       - name: Create release package
         if: startsWith(github.ref, 'refs/tags/')
@@ -62,49 +54,30 @@ jobs:
           echo "📦 Creating HACS release package..."
           mkdir -p release
 
-          # 复制主要文件
-          cp dist/reachy-mini-3d-card.js release/
-          cp dist/reachy-mini-3d-card.js.map release/
-
-          # 复制 assets (URDF + meshes)
-          cp -r dist/assets release/
-
-          # 复制库文件
-          cp -r dist/lib release/
-
-          # 复制 README
-          cp README-V2.md release/README.md
+          # 复制所有必需文件
+          cp reachy-mini-3d-card.js release/
+          cp reachy-mini-3d-card.js.map release/
+          cp -r assets release/
+          cp -r lib release/
+          cp README.md release/
 
           # 创建 zip 包
           cd release
           zip -r ../ha-reachy-mini-card.zip .
           cd ..
 
-          echo "✅ Release package created:"
-          ls -la ha-reachy-mini-card.zip
-          echo ""
-          echo "📋 Zip contents:"
+          echo "✅ Release package created"
           unzip -l ha-reachy-mini-card.zip | head -50
-
-          # 验证必需文件
-          echo ""
-          echo "🔍 Validating package..."
-          unzip -l ha-reachy-mini-card.zip | grep -q "reachy-mini-3d-card.js" && echo "✅ Main JS file found"
-          unzip -l ha-reachy-mini-card.zip | grep -q "assets/reachy-mini.urdf" && echo "✅ URDF file found"
-          unzip -l ha-reachy-mini-card.zip | grep -q "lib/urdf-loader.js" && echo "✅ URDFLoader found"
-          mesh_count=$(unzip -l ha-reachy-mini-card.zip | grep -c "\.stl" || echo 0)
-          echo "✅ Found $mesh_count STL mesh files (expected: 45)"
-          [ "$mesh_count" -eq 45 ] && echo "✅ All meshes present!" || echo "⚠️  Missing some mesh files!"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: reachy-mini-3d-card
           path: |
-            dist/reachy-mini-3d-card.js
-            dist/reachy-mini-3d-card.js.map
-            dist/assets/
-            dist/lib/
+            reachy-mini-3d-card.js
+            reachy-mini-3d-card.js.map
+            assets/
+            lib/
           retention-days: 30
 
       - name: Commit built files to repository
@@ -112,8 +85,8 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add dist/
-          git diff --staged --quiet || git commit -m "chore: build reachy-mini-3d-card.js [skip ci]"
+          git add reachy-mini-3d-card.js reachy-mini-3d-card.js.map lib/
+          git diff --staged --quiet || git commit -m "chore: build [skip ci]"
           git push
 
       - name: Create Release
@@ -122,7 +95,7 @@ jobs:
         with:
           files: |
             ha-reachy-mini-card.zip
-            dist/reachy-mini-3d-card.js
+            reachy-mini-3d-card.js
           body: |
             # 🎉 Reachy Mini 3D Card ${{ github.ref_name }}
 
