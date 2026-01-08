@@ -246,7 +246,7 @@
       this._reconnectTimeout = null;
     }
 
-    static get getConfigElement() {
+    static getConfigElement() {
       return document.createElement('ha-reachy-mini-card-editor');
     }
 
