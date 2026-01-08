@@ -1,5 +1,5 @@
 // Reachy Mini 3D Card - Direct Daemon Connection
-// Version: 2.2.0
+// Version: 3.0.0
 // https://github.com/Desmond-Dong/ha-reachy-mini-card
 
 (function () {
@@ -372,27 +372,64 @@
         const threeScript = document.createElement('script');
         threeScript.src = 'https://cdn.jsdelivr.net/npm/three@0.181.0/build/three.min.js';
         threeScript.crossOrigin = 'anonymous';
+        threeScript.async = true;
+        
+        const timeout = setTimeout(() => {
+          console.error('❌ Three.js loading timeout');
+          reject(new Error('Three.js loading timeout'));
+        }, 30000);
+
         threeScript.onload = () => {
+          clearTimeout(timeout);
           console.log('✅ Three.js loaded');
           
+          // 检查 THREE 是否正确加载
+          if (!window.THREE) {
+            console.error('❌ THREE not found after loading');
+            reject(new Error('THREE not found after loading'));
+            return;
+          }
+
           // 加载 OrbitControls
           const orbitScript = document.createElement('script');
           orbitScript.src = 'https://cdn.jsdelivr.net/npm/three@0.181.0/examples/js/controls/OrbitControls.js';
           orbitScript.crossOrigin = 'anonymous';
+          orbitScript.async = true;
+          
+          const orbitTimeout = setTimeout(() => {
+            console.error('❌ OrbitControls loading timeout');
+            reject(new Error('OrbitControls loading timeout'));
+          }, 30000);
+
           orbitScript.onload = () => {
+            clearTimeout(orbitTimeout);
             console.log('✅ OrbitControls loaded');
+            
+            // 检查 OrbitControls 是否正确加载
+            if (!window.OrbitControls) {
+              console.error('❌ OrbitControls not found after loading');
+              reject(new Error('OrbitControls not found after loading'));
+              return;
+            }
+            
             resolve();
           };
-          orbitScript.onerror = () => {
-            console.error('❌ Failed to load OrbitControls');
+          
+          orbitScript.onerror = (e) => {
+            clearTimeout(orbitTimeout);
+            console.error('❌ Failed to load OrbitControls:', e);
             reject(new Error('Failed to load OrbitControls'));
           };
+          
           document.head.appendChild(orbitScript);
         };
-        threeScript.onerror = () => {
-          console.error('❌ Failed to load Three.js');
+        
+        threeScript.onerror = (e) => {
+          clearTimeout(timeout);
+          console.error('❌ Failed to load Three.js:', e);
           reject(new Error('Failed to load Three.js'));
         };
+        
         document.head.appendChild(threeScript);
       });
     }
