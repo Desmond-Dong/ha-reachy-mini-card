@@ -1,7 +1,11 @@
 // Reachy Mini 3D Card - Direct Daemon Connection
-// Home Assistant Lovelace Custom Card
+// Version: 2.0.0
+// https://github.com/Desmond-Dong/ha-reachy-mini-card
 
-// 注册 custom card
+(function () {
+  'use strict';
+
+  // 注册 custom card
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'reachy-mini-3d-card',
@@ -191,7 +195,7 @@ class ReachyMini3DCard extends HTMLElement {
   getBasePath() {
     const scripts = document.getElementsByTagName('script');
     const src = scripts[scripts.length - 1]?.src || '';
-    return src ? src.substring(0, src.lastIndexOf('/') + 1) : '/hacsfiles/reachy-mini-3d-card/';
+    return src ? src.substring(0, src.lastIndexOf('/') + 1) : '/hacsfiles/ha-reachy-mini-card/';
   }
 
   connectWebSocket() {
@@ -370,3 +374,5 @@ class ReachyMini3DCardEditor extends HTMLElement {
 }
 
 customElements.define('reachy-mini-3d-card-editor', ReachyMini3DCardEditor);
+
+})();
