@@ -387,7 +387,8 @@
         const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.181.0/build/three.module.js');
         const { OrbitControls } = await import('https://cdn.jsdelivr.net/npm/three@0.181.0/examples/jsm/controls/OrbitControls.js');
 
-        this._THREE = THREE;
+        // Three.js ES 模块需要使用 .default 获取实际的 THREE 对象
+        this._THREE = THREE.default;
       } catch (err) {
         console.error('❌ Failed to load Three.js:', err);
         this.showError('Failed to load 3D library. Please check your internet connection.');
