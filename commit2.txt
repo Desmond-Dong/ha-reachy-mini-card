@@ -1,5 +1,0 @@
-fix(cdns): use jsdelivr for all Three.js dependencies  
-  
-- Change OrbitControls CDN from unpkg to jsdelivr  
-- Change STLLoader CDN from unpkg to jsdelivr  
-- All Three.js dependencies now use jsdelivr CDN 

@@ -18,8 +18,13 @@ Connects directly to Reachy Mini daemon via WebSocket for ultra-low latency 3D v
 - **Direct WebSocket Connection** - Connects to Reachy Mini daemon at 20Hz
 - **Ultra-Low Latency** - 50ms updates (10x faster than ESPHome-based solutions)
 - **Real-time 3D Visualization** - Accurate URDF-based rendering with Three.js
+- **Passive Joints Support** - Displays Stewart platform passive joints for accurate visualization
+- **Head Pose Matrix** - Uses 4x4 pose matrix for precise head positioning
+- **Performance Optimized** - Frame throttling and data version control for smooth rendering
 - **Interactive Controls** - Rotate, zoom, pan with mouse/touch
-- **Auto-reconnection** - Automatically reconnects on connection loss
+- **Smart Reconnection** - Exponential backoff reconnection strategy
+- **Customizable Appearance** - Background color, grid, camera distance
+- **FPS Counter** - Real-time performance monitoring
 - **No ESPHome Required** - Direct connection, zero intermediate layer
 
 ## 📦 Installation
@@ -74,8 +79,13 @@ height: 400
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `daemon_host` | string | `localhost` | Reachy Mini daemon hostname or IP |
-| `daemon_port` | number | `3333` | Daemon WebSocket port |
+| `daemon_port` | number | `8000` | Daemon WebSocket port |
 | `height` | number | `400` | Card height in pixels |
+| `enable_passive_joints` | boolean | `true` | Enable Stewart platform passive joints display |
+| `enable_head_pose` | boolean | `true` | Use 4x4 pose matrix for head positioning |
+| `background_color` | string | `#f5f5f5` | Background color (hex code) |
+| `enable_grid` | boolean | `true` | Display ground grid helper |
+| `camera_distance` | number | `0.5` | Initial camera distance (0.2 - 1.5) |
 
 ## 🔧 Troubleshooting
 
@@ -159,7 +169,7 @@ ha-reachy-mini-card/
 
 The card connects to:
 ```
-ws://${host}:${port}/api/state/ws/full?frequency=20&with_head_joints=true&with_antenna_positions=true
+ws://${host}:${port}/api/state/ws/full?frequency=20&with_head_joints=true&with_antenna_positions=true&with_passive_joints=true&with_head_pose=true&use_pose_matrix=true
 ```
 
 Expected data structure:
@@ -167,15 +177,21 @@ Expected data structure:
 {
   "head_joints": [0, 0, 0, 0, 0, 0, 0],
   "antennas_position": [0, 0],
-  "head_pose": [...],  // 4x4 matrix
-  "passive_joints": [...]  // 21 values
+  "head_pose": [...],  // 4x4 matrix (16 floats)
+  "passive_joints": [...]  // 21 floats (passive_1_x/y/z to passive_7_x/y/z)
 }
 ```
 
+**Data Details:**
+- `head_joints` (7 values): [yaw_body, stewart_1, stewart_2, stewart_3, stewart_4, stewart_5, stewart_6]
+- `antennas_position` (2 values): [left, right]
+- `head_pose` (16 values): 4x4 transformation matrix (row-major)
+- `passive_joints` (21 values): Stewart platform passive joints for accurate visualization
+
 ### Dependencies
 
-- **Three.js** - 3D rendering engine
-- **URDFLoader** - Load robot models from URDF
+- **Three.js** (v0.181.0) - 3D rendering engine
+- **URDFLoader** (v0.12.6) - Load robot models from URDF
 - **Home Assistant** - Web Components API
 
 ## 📄 License

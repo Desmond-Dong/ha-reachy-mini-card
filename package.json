@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "lit": "^3.1.0",
-    "three": "^0.160.0",
+    "three": "^0.181.0",
     "urdf-loader": "^0.12.6"
   },
   "devDependencies": {
