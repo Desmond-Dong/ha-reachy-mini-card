@@ -1,18 +1,9 @@
 // Reachy Mini 3D Card - Direct Daemon Connection
-// Version: 2.0.0
+// Version: 2.2.0
 // https://github.com/Desmond-Dong/ha-reachy-mini-card
 
 (function () {
   'use strict';
-
-  // 注册 custom card
-  window.customCards = window.customCards || [];
-  window.customCards.push({
-    type: 'reachy-mini-3d-card',
-    name: 'Reachy Mini 3D Card',
-    description: 'Real-time 3D visualization of Reachy Mini robot',
-    documentationURL: 'https://github.com/Desmond-Dong/ha-reachy-mini-card'
-  });
 
   // 被动关节名称常量
   const PASSIVE_JOINT_NAMES = [
@@ -25,7 +16,7 @@
     'passive_7_x', 'passive_7_y', 'passive_7_z',
   ];
 
-  // 图形化配置编辑器 - 必须在主卡之前定义和注册
+  // 配置编辑器 - 必须在主卡之前定义和注册
   class ReachyMini3DCardEditor extends HTMLElement {
     constructor() {
       super();
@@ -98,9 +89,9 @@
           letter-spacing: 0.5px;
         }
       </style>
-      
+
       <div class="section-title">Connection</div>
-      
+
       <div class="form-row">
         <label for="host">Daemon Host</label>
         <input
@@ -111,7 +102,7 @@
         />
         <div class="hint">Reachy Mini daemon hostname or IP address</div>
       </div>
-      
+
       <div class="form-row">
         <label for="port">Daemon Port</label>
         <input
@@ -122,9 +113,9 @@
         />
         <div class="hint">WebSocket port (default: 8000)</div>
       </div>
-      
+
       <div class="section-title">Display</div>
-      
+
       <div class="form-row">
         <label for="height">Card Height (px)</label>
         <input
@@ -135,7 +126,7 @@
         />
         <div class="hint">Height of the card in pixels</div>
       </div>
-      
+
       <div class="form-row">
         <label for="background">Background Color</label>
         <input
@@ -146,7 +137,7 @@
         />
         <div class="hint">Background color (hex code)</div>
       </div>
-      
+
       <div class="form-row">
         <label for="camera_distance">Camera Distance</label>
         <input
@@ -158,21 +149,21 @@
         />
         <div class="hint">Initial camera distance (0.2 - 1.5)</div>
       </div>
-      
+
       <div class="section-title">Features</div>
-      
+
       <div class="checkbox-row">
         <input type="checkbox" id="enable_passive" ${config.enable_passive_joints !== false ? 'checked' : ''}>
         <label for="enable_passive">Enable Passive Joints</label>
       </div>
       <div class="hint">Show Stewart platform passive joints (requires daemon support)</div>
-      
+
       <div class="checkbox-row">
         <input type="checkbox" id="enable_pose" ${config.enable_head_pose !== false ? 'checked' : ''}>
         <label for="enable_pose">Enable Head Pose</label>
       </div>
       <div class="hint">Use 4x4 pose matrix for head positioning</div>
-      
+
       <div class="checkbox-row">
         <input type="checkbox" id="enable_grid" ${config.enable_grid !== false ? 'checked' : ''}>
         <label for="enable_grid">Show Grid</label>
@@ -232,16 +223,14 @@
     }
   }
 
-  // 先注册编辑器
+  // 注册编辑器
   customElements.define('reachy-mini-3d-card-editor', ReachyMini3DCardEditor);
 
-  // 主卡类
+  // 主卡片组件
   class ReachyMini3DCard extends HTMLElement {
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
-      
-      // 性能优化相关
       this._frameCount = 0;
       this._lastDataVersion = -1;
       this._robotState = {
@@ -251,8 +240,6 @@
         antennas: [0, 0],
         dataVersion: 0
       };
-      
-      // WebSocket 重连控制
       this._reconnectAttempts = 0;
       this._maxReconnectAttempts = 10;
       this._reconnectDelay = 3000;
@@ -361,46 +348,264 @@
 
     async init() {
       try {
-        // 初始化 Three.js
-        await this.initThreeJS();
-
-        // 连接 WebSocket
-        this.connectWebSocket();
-
-        // 加载机器人模型
+        await this.loadThreeJS();
+        await this.connectWebSocket();
         await this.loadRobot();
-
       } catch (err) {
         console.error('Init error:', err);
         this.showError(err.message);
       }
     }
 
-    async initThreeJS() {
+    async loadThreeJS() {
+      return new Promise((resolve, reject) => {
+        // 检查是否已经加载
+        if (window.THREE && window.OrbitControls) {
+          resolve();
+          return;
+        }
+
+        // 加载 Three.js
+        const threeScript = document.createElement('script');
+        threeScript.src = 'https://cdn.jsdelivr.net/npm/three@0.181.0/build/three.min.js';
+        threeScript.onload = () => {
+          console.log('✅ Three.js loaded');
+          
+          // 加载 OrbitControls
+          const orbitScript = document.createElement('script');
+          orbitScript.src = 'https://cdn.jsdelivr.net/npm/three@0.181.0/examples/js/controls/OrbitControls.js';
+          orbitScript.onload = () => {
+            console.log('✅ OrbitControls loaded');
+            resolve();
+          };
+          orbitScript.onerror = () => {
+            reject(new Error('Failed to load OrbitControls'));
+          };
+          document.head.appendChild(orbitScript);
+        };
+        threeScript.onerror = () => {
+          reject(new Error('Failed to load Three.js'));
+        };
+        document.head.appendChild(threeScript);
+      });
+    }
+
+    async connectWebSocket() {
+      const { daemon_host, daemon_port } = this._config;
+      let wsUrl = `ws://${daemon_host}:${daemon_port}/api/state/ws/full?frequency=20`;
+      wsUrl += '&with_head_joints=true';
+      wsUrl += '&with_antenna_positions=true';
+      if (this._config.enable_passive_joints !== false) {
+        wsUrl += '&with_passive_joints=true';
+      }
+      if (this._config.enable_head_pose !== false) {
+        wsUrl += '&with_head_pose=true';
+        wsUrl += '&use_pose_matrix=true';
+      }
+
+      console.log('🔌 Connecting to WebSocket:', wsUrl);
+      this._ws = new WebSocket(wsUrl);
+
+      this._ws.onopen = () => {
+        console.log('✅ WebSocket connected');
+        this._reconnectAttempts = 0;
+        this.updateStatus('connected', 'Connected');
+      };
+
+      this._ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          this._processRobotData(data);
+        } catch (err) {
+          console.error('❌ Parse error:', err);
+        }
+      };
+
+      this._ws.onerror = (error) => {
+        console.error('❌ WebSocket error:', error);
+        this.updateStatus('error', 'Error');
+      };
+
+      this._ws.onclose = () => {
+        console.log('🔌 WebSocket closed');
+        this.updateStatus('error', 'Disconnected');
+        
+        if (this._reconnectAttempts < this._maxReconnectAttempts) {
+          this._reconnectAttempts++;
+          const delay = Math.min(
+            this._reconnectDelay * Math.pow(1.5, this._reconnectAttempts - 1),
+            30000
+          );
+          
+          console.log(`🔄 Reconnecting in ${delay}ms (attempt ${this._reconnectAttempts}/${this._maxReconnectAttempts})`);
+          
+          this._reconnectTimeout = setTimeout(() => {
+            this.connectWebSocket();
+          }, delay);
+        } else {
+          console.error('❌ Max reconnection attempts reached');
+          this.updateStatus('error', 'Connection Failed');
+        }
+      };
+    }
+
+    _processRobotData(data) {
+      if (data.head_joints && Array.isArray(data.head_joints) && data.head_joints.length === 7) {
+        this._robotState.headJoints = data.head_joints;
+      }
+      
+      if (data.head_pose) {
+        const headPoseArray = Array.isArray(data.head_pose) 
+          ? data.head_pose 
+          : data.head_pose.m;
+        if (headPoseArray && headPoseArray.length === 16) {
+          this._robotState.headPose = headPoseArray;
+        }
+      }
+      
+      if (data.antennas_position && Array.isArray(data.antennas_position) && data.antennas_position.length >= 2) {
+        this._robotState.antennas = data.antennas_position;
+      }
+      
+      if (data.passive_joints && Array.isArray(data.passive_joints) && data.passive_joints.length >= 21) {
+        this._robotState.passiveJoints = data.passive_joints;
+      }
+      
+      this._robotState.dataVersion++;
+      this._updateRobot();
+    }
+
+    _updateRobot() {
+      if (!this._robot) return;
+      
+      this._frameCount++;
+      if (this._frameCount % 3 !== 0) {
+        return; // Throttle to ~20Hz
+      }
+      
+      if (this._robotState.dataVersion === this._lastDataVersion) {
+        return; // No new data
+      }
+      this._lastDataVersion = this._robotState.dataVersion;
+
+      // Apply head joints
+      if (this._robotState.headJoints) {
+        const joints = this._robotState.headJoints;
+        if (this._robot.joints['yaw_body']) {
+          this._robot.setJointValue('yaw_body', joints[0]);
+        }
+        ['stewart_1', 'stewart_2', 'stewart_3', 'stewart_4', 'stewart_5', 'stewart_6'].forEach((name, i) => {
+          if (this._robot.joints[name]) {
+            this._robot.setJointValue(name, joints[i + 1]);
+          }
+        });
+      }
+
+      // Apply passive joints
+      if (this._config.enable_passive_joints !== false && this._robotState.passiveJoints) {
+        const passiveJoints = this._robotState.passiveJoints;
+        for (let i = 0; i < 21; i++) {
+          const jointName = PASSIVE_JOINT_NAMES[i];
+          if (this._robot.joints[jointName]) {
+            this._robot.setJointValue(jointName, passiveJoints[i]);
+          }
+        }
+      }
+
+      // Apply antennas
+      if (this._robotState.antennas) {
+        const antennas = this._robotState.antennas;
+        if (this._robot.joints['left_antenna']) {
+          this._robot.setJointValue('left_antenna', -antennas[1]);
+        }
+        if (this._robot.joints['right_antenna']) {
+          this._robot.setJointValue('right_antenna', -antennas[0]);
+        }
+      }
+    }
+
+    async loadRobot() {
+      const basePath = this.getBasePath();
+      
+      // 动态加载 URDFLoader
+      const script = document.createElement('script');
+      script.src = `${basePath}lib/URDFClasses.js`;
+      document.head.appendChild(script);
+      
+      await new Promise(resolve => script.onload = resolve);
+      
+      const script2 = document.createElement('script');
+      script2.src = `${basePath}lib/URDFDragControls.js`;
+      document.head.appendChild(script2);
+      
+      await new Promise(resolve => script2.onload = resolve);
+      
+      const script3 = document.createElement('script');
+      script3.src = `${basePath}lib/urdf-loader.js`;
+      document.head.appendChild(script3);
+      
+      await new Promise(resolve => script3.onload = resolve);
+      
+      const loader = new window.URDFLoader();
+      loader.workingPath = `${basePath}assets/`;
+      
+      this._robot = await loader.load(`${basePath}assets/reachy-mini.urdf`);
+      this._scene.add(this._robot);
+
+      // Initialize all joints to zero
+      this._initializeJoints();
+
+      // Hide loading
+      const loading = this.shadowRoot.querySelector('#loading');
+      if (loading) loading.style.display = 'none';
+
+      // Start animation loop
+      this._startAnimation();
+    }
+
+    _initializeJoints() {
+      if (!this._robot || !this._robot.joints) return;
+
+      // Initialize yaw_body
+      if (this._robot.joints['yaw_body']) {
+        this._robot.setJointValue('yaw_body', 0);
+      }
+
+      // Initialize stewart joints
+      ['stewart_1', 'stewart_2', 'stewart_3', 'stewart_4', 'stewart_5', 'stewart_6'].forEach(jointName => {
+        if (this._robot.joints[jointName]) {
+          this._robot.setJointValue(jointName, 0);
+        }
+      });
+
+      // Initialize passive joints
+      PASSIVE_JOINT_NAMES.forEach(jointName => {
+        if (this._robot.joints[jointName]) {
+          this._robot.setJointValue(jointName, 0);
+        }
+      });
+
+      // Initialize antennas
+      ['left_antenna', 'right_antenna'].forEach(jointName => {
+        if (this._robot.joints[jointName]) {
+          this._robot.setJointValue(jointName, 0);
+        }
+      });
+    }
+
+    _startAnimation() {
       const container = this.shadowRoot.querySelector('#container');
       const canvas = document.createElement('canvas');
       container.appendChild(canvas);
 
-      // 动态导入 Three.js 和依赖
-      // 使用 CDN 以确保在 Home Assistant 环境中正常工作
-      try {
-        const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.181.0/build/three.module.js');
-        const { OrbitControls } = await import('https://cdn.jsdelivr.net/npm/three@0.181.0/examples/jsm/controls/OrbitControls.js');
+      const THREE = window.THREE;
+      
+      // Scene
+      this._scene = new THREE.Scene();
+      this._scene.background = new THREE.Color(this._config.background_color || '#f5f5f5');
 
-        // Three.js ES 模块需要使用 .default 获取实际的 THREE 对象
-        this._THREE = THREE.default;
-      } catch (err) {
-        console.error('❌ Failed to load Three.js:', err);
-        this.showError('Failed to load 3D library. Please check your internet connection.');
-        throw err;
-      }
-
-      // 场景
-      this._scene = new this._THREE.Scene();
-      this._scene.background = new this._THREE.Color(this._config.background_color || '#f5f5f5');
-
-      // 相机
-      this._camera = new this._THREE.PerspectiveCamera(
+      // Camera
+      this._camera = new THREE.PerspectiveCamera(
         50,
         container.clientWidth / this._config.height,
         0.01,
@@ -408,46 +613,46 @@
       );
       this._camera.position.set(0.3, 0.3, this._config.camera_distance || 0.5);
 
-      // 渲染器
-      this._renderer = new this._THREE.WebGLRenderer({ canvas, antialias: true });
+      // Renderer
+      this._renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
       this._renderer.setSize(container.clientWidth, this._config.height);
       this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-      // 控制器
-      this._controls = new OrbitControls(this._camera, canvas);
+      // Controls
+      this._controls = new window.OrbitControls(this._camera, canvas);
       this._controls.enableDamping = true;
       this._controls.dampingFactor = 0.05;
       this._controls.minDistance = 0.2;
       this._controls.maxDistance = 1.5;
 
-      // 灯光
-      this._scene.add(new this._THREE.AmbientLight(0xffffff, 0.6));
-
-      const directionalLight = new this._THREE.DirectionalLight(0xffffff, 0.8);
+      // Lights
+      this._scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
       directionalLight.position.set(1, 1, 1);
       this._scene.add(directionalLight);
-
-      const backLight = new this._THREE.DirectionalLight(0xffffff, 0.3);
+      
+      const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
       backLight.position.set(-1, -1, -1);
       this._scene.add(backLight);
 
-      // 地面网格
+      // Grid
       if (this._config.enable_grid !== false) {
-        this._scene.add(new this._THREE.GridHelper(0.4, 20, 0x888888, 0xcccccc));
+        this._scene.add(new THREE.GridHelper(0.4, 20, 0x888888, 0xcccccc));
       }
 
-      // FPS 计数器
+      // FPS counter
       this._fpsCounter = {
         frameCount: 0,
         lastTime: performance.now(),
         fps: 0
       };
 
-      // 动画循环
+      // Animation loop
       const animate = () => {
         requestAnimationFrame(animate);
         
-        // FPS 计算
+        // FPS calculation
         this._fpsCounter.frameCount++;
         const currentTime = performance.now();
         if (currentTime - this._fpsCounter.lastTime >= 1000) {
@@ -467,257 +672,46 @@
       animate();
     }
 
-    async loadRobot() {
-      const basePath = this.getBasePath();
-      const { default: URDFLoader } = await import(`${basePath}lib/urdf-loader.js`);
-
-      const loader = new URDFLoader();
-      loader.workingPath = `${basePath}assets/`;
-
-      this._robot = await loader.load(`${basePath}assets/reachy-mini.urdf`);
-      this._scene.add(this._robot);
-
-      // 初始化所有关节为零
-      this._initializeJoints();
-
-      // 隐藏加载动画
-      const loading = this.shadowRoot.querySelector('#loading');
-      if (loading) loading.style.display = 'none';
+    updateStatus(status, message) {
+      const statusEl = this.shadowRoot.querySelector('#status');
+      if (statusEl) {
+        statusEl.className = status;
+        statusEl.textContent = message;
+      }
     }
 
-    _initializeJoints() {
-      if (!this._robot || !this._robot.joints) return;
-
-      // 初始化 yaw_body
-      if (this._robot.joints['yaw_body']) {
-        this._robot.setJointValue('yaw_body', 0);
+    showError(message) {
+      const container = this.shadowRoot.querySelector('#container');
+      if (container) {
+        container.innerHTML = `
+          <div style="padding: 20px; color: #f44336;">Error: ${message}</div>
+        `;
       }
-
-      // 初始化 stewart 关节
-      const stewartJoints = ['stewart_1', 'stewart_2', 'stewart_3', 'stewart_4', 'stewart_5', 'stewart_6'];
-      stewartJoints.forEach(jointName => {
-        if (this._robot.joints[jointName]) {
-          this._robot.setJointValue(jointName, 0);
-        }
-      });
-
-      // 初始化被动关节
-      PASSIVE_JOINT_NAMES.forEach(jointName => {
-        if (this._robot.joints[jointName]) {
-          this._robot.setJointValue(jointName, 0);
-        }
-      });
-
-      // 初始化天线
-      ['left_antenna', 'right_antenna'].forEach(jointName => {
-        if (this._robot.joints[jointName]) {
-          this._robot.setJointValue(jointName, 0);
-        }
-      });
-
-      // 强制更新矩阵
-      this._robot.traverse((child) => {
-        if (child.isObject3D) {
-          child.updateMatrix();
-          child.updateMatrixWorld(true);
-        }
-      });
     }
 
     getBasePath() {
       const scripts = document.getElementsByTagName('script');
-      const src = scripts[scripts.length - 1]?.src || '';
-      return src ? src.substring(0, src.lastIndexOf('/') + 1) : '/hacsfiles/ha-reachy-mini-card/';
-    }
-
-    connectWebSocket() {
-      const { daemon_host, daemon_port } = this._config;
-      
-      // 构建 WebSocket URL，包含所有需要的参数
-      let wsUrl = `ws://${daemon_host}:${daemon_port}/api/state/ws/full?frequency=20`;
-      wsUrl += '&with_head_joints=true';
-      wsUrl += '&with_antenna_positions=true';
-      
-      if (this._config.enable_passive_joints !== false) {
-        wsUrl += '&with_passive_joints=true';
+      const lastScript = scripts[scripts.length - 1];
+      const src = lastScript?.src || '';
+      if (src) {
+        return src.substring(0, src.lastIndexOf('/') + 1);
       }
-      
-      if (this._config.enable_head_pose !== false) {
-        wsUrl += '&with_head_pose=true';
-        wsUrl += '&use_pose_matrix=true';
-      }
-
-      console.log('🔌 Connecting to WebSocket:', wsUrl);
-
-      this._ws = new WebSocket(wsUrl);
-
-      this._ws.onopen = () => {
-        console.log('✅ WebSocket connected');
-        this._reconnectAttempts = 0;
-        this.updateStatus('connected', 'Connected');
-      };
-
-      this._ws.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          this._processRobotData(data);
-        } catch (err) {
-          console.error('❌ Parse error:', err);
-        }
-      };
-
-      this._ws.onerror = (error) => {
-        console.error('❌ WebSocket error:', error);
-        this.updateStatus('error', 'Error');
-      };
-
-      this._ws.onclose = () => {
-        console.log('🔌 WebSocket closed');
-        this.updateStatus('error', 'Disconnected');
-        
-        // 重连逻辑
-        if (this._reconnectAttempts < this._maxReconnectAttempts) {
-          this._reconnectAttempts++;
-          const delay = Math.min(this._reconnectDelay * Math.pow(1.5, this._reconnectAttempts - 1), 30000);
-          
-          console.log(`🔄 Reconnecting in ${delay}ms (attempt ${this._reconnectAttempts}/${this._maxReconnectAttempts})`);
-          
-          this._reconnectTimeout = setTimeout(() => {
-            this.connectWebSocket();
-          }, delay);
-        } else {
-          console.error('❌ Max reconnection attempts reached');
-          this.updateStatus('error', 'Connection Failed');
-        }
-      };
-    }
-
-    _processRobotData(data) {
-      // 提取 head_joints (7 values)
-      if (data.head_joints && Array.isArray(data.head_joints) && data.head_joints.length === 7) {
-        this._robotState.headJoints = data.head_joints;
-      }
-
-      // 提取 head_pose (4x4 matrix)
-      if (data.head_pose) {
-        const headPoseArray = Array.isArray(data.head_pose) 
-          ? data.head_pose 
-          : data.head_pose.m;
-        
-        if (headPoseArray && headPoseArray.length === 16) {
-          this._robotState.headPose = headPoseArray;
-        }
-      }
-
-      // 提取天线位置
-      if (data.antennas_position && Array.isArray(data.antennas_position) && data.antennas_position.length >= 2) {
-        this._robotState.antennas = data.antennas_position;
-      }
-
-      // 提取被动关节 (21 values)
-      if (data.passive_joints && Array.isArray(data.passive_joints) && data.passive_joints.length >= 21) {
-        this._robotState.passiveJoints = data.passive_joints;
-      }
-
-      // 增加数据版本号
-      this._robotState.dataVersion++;
-
-      // 更新机器人
-      this._updateRobot();
-    }
-
-    _updateRobot() {
-      if (!this._robot) return;
-
-      // 性能优化：帧节流（每3帧更新一次，约20Hz）
-      this._frameCount++;
-      if (this._frameCount % 3 !== 0) {
-        return;
-      }
-
-      // 性能优化：如果数据版本没有变化，跳过更新
-      if (this._robotState.dataVersion === this._lastDataVersion) {
-        return;
-      }
-      this._lastDataVersion = this._robotState.dataVersion;
-
-      // 应用 head_joints
-      if (this._robotState.headJoints) {
-        const j = this._robotState.headJoints;
-        
-        if (this._robot.joints['yaw_body']) {
-          this._robot.setJointValue('yaw_body', j[0]);
-        }
-        
-        const stewartJoints = ['stewart_1', 'stewart_2', 'stewart_3', 'stewart_4', 'stewart_5', 'stewart_6'];
-        stewartJoints.forEach((jointName, index) => {
-          if (this._robot.joints[jointName]) {
-            this._robot.setJointValue(jointName, j[index + 1]);
-          }
-        });
-      }
-
-      // 应用被动关节
-      if (this._config.enable_passive_joints !== false && this._robotState.passiveJoints) {
-        const passiveArray = this._robotState.passiveJoints;
-        for (let i = 0; i < 21; i++) {
-          const jointName = PASSIVE_JOINT_NAMES[i];
-          if (this._robot.joints[jointName]) {
-            this._robot.setJointValue(jointName, passiveArray[i]);
-          }
-        }
-      }
-
-      // 应用天线位置（注意：需要反转映射和值）
-      if (this._robotState.antennas) {
-        const antennas = this._robotState.antennas;
-        
-        // 左天线（视觉上在右侧）
-        if (this._robot.joints['left_antenna']) {
-          this._robot.setJointValue('left_antenna', -antennas[1]);
-        }
-        
-        // 右天线（视觉上在左侧）
-        if (this._robot.joints['right_antenna']) {
-          this._robot.setJointValue('right_antenna', -antennas[0]);
-        }
-      }
-    }
-
-    updateStatus(state, msg) {
-      const el = this.shadowRoot.querySelector('#status');
-      if (el) {
-        el.className = state;
-        el.textContent = msg;
-      }
-    }
-
-    showError(msg) {
-      this.shadowRoot.querySelector('#container').innerHTML = `
-      <div style="padding: 20px; color: #f44336;">Error: ${msg}</div>
-    `;
+      return '/hacsfiles/ha-reachy-mini-card/';
     }
 
     disconnectedCallback() {
-      // 清理 WebSocket
       if (this._ws) {
         this._ws.close();
         this._ws = null;
       }
-      
-      // 清理重连超时
       if (this._reconnectTimeout) {
         clearTimeout(this._reconnectTimeout);
         this._reconnectTimeout = null;
       }
-      
-      // 清理渲染器
       if (this._renderer) {
         this._renderer.dispose();
         this._renderer = null;
       }
-      
-      // 清理场景
       if (this._scene) {
         this._scene.clear();
         this._scene = null;
@@ -725,6 +719,7 @@
     }
   }
 
+  // 注册主卡片
   customElements.define('reachy-mini-3d-card', ReachyMini3DCard);
 
 })();

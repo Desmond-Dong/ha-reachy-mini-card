@@ -1,0 +1,93 @@
+# Logs
+logs
+*.log
+.claude-docs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+Reachy
+Test
+
+.playwright-mcp
+
+.cursor/
+
+.analysis-docs/
+.claude-4.5-sonnet-analysis/
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Lock files (using Yarn, ignore npm/pnpm lock files)
+package-lock.json
+pnpm-lock.yaml
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Clés de signature Tauri - SECRETS CRITIQUES
+# ⚠️ NE JAMAIS COMMITER CES FICHIERS ⚠️
+*.key
+*.key.pub
+*.key.pem
+*.key.priv
+*private*.key
+*secret*.key
+keys/
+.tauri/
+*.sig
+*.signature
+*.sign
+*.cer
+*.p12
+*.p8
+*.pem
+test-updates/
+mock-updates/
+releases/
+
+# Rust build artifacts
+# Cargo build directories
+target/
+**/target/
+
+# Rust incremental compilation
+**/*.rs.bin
+**/*.rmeta
+**/*.rlib
+**/*.d
+
+# Rust debug symbols
+**/*.pdb
+**/*.dSYM/
+
+# Cargo registry cache
+.cargo/registry/
+.cargo/git/
+
+# Generated sidecar binaries and Python environment
+# These are built by build-sidecar scripts
+src-tauri/binaries/
+**/binaries/
+
+# Rust build artifacts in uv-wrapper
+uv-wrapper/target/
+uv-wrapper/target/**/*
+
+# Tutorial videos - too large, never commit
+src/assets/tutorial/
+docs/latest.json
+reachy-mini-desktop-app/
