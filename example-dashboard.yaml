@@ -10,7 +10,7 @@ views:
       # Main 3D Visualization
       - type: vertical-stack
         cards:
-          - type: custom:reachy-mini-3d-card
+          - type: custom:ha-reachy-mini-card
             daemon_host: localhost
             daemon_port: 8000
             height: 500
@@ -21,7 +21,7 @@ views:
             camera_distance: 0.5
 
       # Control Panel (Smaller)
-      - type: custom:reachy-mini-3d-card
+      - type: custom:ha-reachy-mini-card
         daemon_host: localhost
         daemon_port: 8000
         height: 300
@@ -36,13 +36,13 @@ views:
     cards:
       - type: horizontal-stack
         cards:
-          - type: custom:reachy-mini-3d-card
+          - type: custom:ha-reachy-mini-card
             daemon_host: 192.168.1.100
             daemon_port: 8000
             height: 300
             background_color: '#f5f5f5'
 
-          - type: custom:reachy-mini-3d-card
+          - type: custom:ha-reachy-mini-card
             daemon_host: 192.168.1.101
             daemon_port: 8000
             height: 300
@@ -69,7 +69,7 @@ views:
               - `enable_head_pose`: Use 4x4 pose matrix (default: `true`)
               - `enable_grid`: Show ground grid (default: `true`)
 
-          - type: custom:reachy-mini-3d-card
+          - type: custom:ha-reachy-mini-card
             daemon_host: localhost
             daemon_port: 8000
             height: 400

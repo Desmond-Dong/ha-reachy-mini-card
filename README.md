@@ -68,7 +68,7 @@ After installation completes:
 Add the card to your Lovelace dashboard:
 
 ```yaml
-type: custom:reachy-mini-3d-card
+type: custom:ha-reachy-mini-card
 daemon_host: localhost
 daemon_port: 8000
 height: 400
@@ -81,7 +81,7 @@ height: 400
 ### Basic Configuration
 
 ```yaml
-type: custom:reachy-mini-3d-card
+type: custom:ha-reachy-mini-card
 daemon_host: localhost  # Reachy Mini daemon host
 daemon_port: 3333       # Daemon port
 height: 400             # Card height in pixels
@@ -90,7 +90,7 @@ height: 400             # Card height in pixels
 ### Remote Robot (WiFi)
 
 ```yaml
-type: custom:reachy-mini-3d-card
+type: custom:ha-reachy-mini-card
 daemon_host: 192.168.1.100  # Your Reachy Mini IP
 daemon_port: 3333
 height: 400
@@ -126,7 +126,7 @@ If you don't see "Reachy Mini 3D Card" in the card picker:
    - Right-click refresh button → **Empty Cache and Hard Reload**
 
 4. **Check browser console** (F12):
-   - Look for errors related to `reachy-mini-3d-card`
+   - Look for errors related to `ha-reachy-mini-card`
    - Common errors:
      - `Failed to load resource` - Check network connection
      - `customElements.define` error - Refresh the page
@@ -135,7 +135,7 @@ If you don't see "Reachy Mini 3D Card" in the card picker:
    - Edit your dashboard in YAML mode
    - Add the card configuration directly:
    ```yaml
-   type: custom:reachy-mini-3d-card
+   type: custom:ha-reachy-mini-card
    daemon_host: localhost
    daemon_port: 8000
    height: 400
@@ -201,7 +201,7 @@ npm install
 # Build
 npm run build
 
-# Output in dist/reachy-mini-3d-card.js
+# Output in dist/ha-reachy-mini-card.js
 ```
 
 ### Project Structure
@@ -209,7 +209,7 @@ npm run build
 ```
 ha-reachy-mini-card/
 ├── src/
-│   └── reachy-mini-3d-card.js    # Main card implementation
+│   └── ha-reachy-mini-card.js    # Main card implementation
 ├── assets/
 │   ├── reachy-mini.urdf          # Robot definition
 │   └── meshes/                   # 45 STL files

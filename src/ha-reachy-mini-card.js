@@ -224,7 +224,7 @@
   }
 
   // 注册编辑器
-  customElements.define('reachy-mini-3d-card-editor', ReachyMini3DCardEditor);
+  customElements.define('ha-reachy-mini-card-editor', ReachyMini3DCardEditor);
 
   // 主卡片组件
   class ReachyMini3DCard extends HTMLElement {
@@ -247,7 +247,7 @@
     }
 
     static get getConfigElement() {
-      return document.createElement('reachy-mini-3d-card-editor');
+      return document.createElement('ha-reachy-mini-card-editor');
     }
 
     static getStubConfig() {
@@ -727,6 +727,6 @@
   }
 
   // 注册主卡片
-  customElements.define('reachy-mini-3d-card', ReachyMini3DCard);
+  customElements.define('ha-reachy-mini-card', ReachyMini3DCard);
 
 })();

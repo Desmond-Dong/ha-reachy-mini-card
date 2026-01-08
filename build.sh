@@ -8,7 +8,7 @@ set -e
 VERSION=$(node -p "require('./package.json').version")
 DIST_DIR="dist"
 BUILD_DIR="build"
-ZIP_FILE="reachy-mini-3d-card.zip"
+ZIP_FILE="ha-reachy-mini-card.zip"
 
 echo "🔨 Building Reachy Mini 3D Card v${VERSION}"
 
@@ -52,14 +52,14 @@ License: Apache-2.0
 \`\`\`yaml
 lovelace:
   resources:
-    - url: /local/reachy-mini-3d-card/reachy-mini-3d-card.js
+    - url: /local/ha-reachy-mini-card/ha-reachy-mini-card.js
       type: module
 \`\`\`
 
 4. Add to dashboard:
 
 \`\`\`yaml
-type: custom:reachy-mini-3d-card
+type: custom:ha-reachy-mini-card
 entity_prefix: reachy_mini
 \`\`\`
 
@@ -92,7 +92,7 @@ echo ""
 echo "To test locally:"
 echo "  1. Copy $DIST_DIR/$ZIP_FILE to Home Assistant www directory"
 echo "  2. Extract: unzip $ZIP_FILE"
-echo "  3. Add resource: /local/reachy-mini-3d-card/reachy-mini-3d-card.js"
+echo "  3. Add resource: /local/ha-reachy-mini-card/ha-reachy-mini-card.js"
 echo ""
 echo "To release to GitHub:"
 echo "  git tag v${VERSION}"
