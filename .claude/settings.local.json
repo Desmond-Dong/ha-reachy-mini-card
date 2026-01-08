@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "SlashCommand(/zcf:git-commit)",
+      "Edit",
+      "Bash(cd:*)",
+      "SlashCommand(/zcf:git-commit --emoji)",
+      "SlashCommand(/zcf:git-commit:*)",
+      "Bash(git:*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "hooks": {},
+  "alwaysThinkingEnabled": true,
+  "outputStyle": "default",
+  "statusLine": {
+    "type": "command",
+    "command": "%USERPROFILE%\\.claude\\ccline\\ccline.exe",
+    "padding": 0
+  },
+  "model": "opus"
+}

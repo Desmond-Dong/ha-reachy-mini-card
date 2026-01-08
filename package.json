@@ -1,11 +1,11 @@
 {
   "name": "reachy-mini-3d-card",
-  "version": "1.0.4",
-  "description": "3D visualization card for Reachy Mini robot in Home Assistant",
+  "version": "2.0.0",
+  "description": "3D visualization card for Reachy Mini robot in Home Assistant - Direct daemon connection",
   "main": "reachy-mini-3d-card.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/djhui5710/reachy_mini_ha_voice"
+    "url": "https://github.com/djhui5710/ha-reachy-mini-card"
   },
   "keywords": [
     "home-assistant",
@@ -14,14 +14,25 @@
     "reachy-mini",
     "3d",
     "robot",
-    "visualization"
+    "visualization",
+    "websocket",
+    "real-time"
   ],
   "author": "djhui5710",
   "license": "Apache-2.0",
   "scripts": {
-    "build": "rollup -c",
-    "watch": "rollup -c --watch",
-    "lint": "eslint src/**/*.js"
+    "build": "rollup -c rollup.config.v2.js",
+    "build:v1": "rollup -c rollup.config.v1.js",
+    "build:v2": "rollup -c rollup.config.v2.js",
+    "build:all": "npm run build:v1 && npm run build:v2",
+    "watch": "rollup -c rollup.config.v2.js --watch",
+    "watch:v1": "rollup -c rollup.config.v1.js --watch",
+    "watch:v2": "rollup -c rollup.config.v2.js --watch",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "prepack": "npm run build",
+    "release": "npm run build && npm run test:zip",
+    "test:zip": "node scripts/test-zip.js"
   },
   "dependencies": {
     "lit": "^3.1.0",
@@ -29,10 +40,10 @@
     "urdf-loader": "^0.12.6"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.0",
     "@rollup/plugin-node-resolve": "^15.2.0",
     "@rollup/plugin-terser": "^0.4.0",
-    "rollup": "^4.0.0",
-    "@rollup/plugin-commonjs": "^25.0.0",
-    "eslint": "^8.55.0"
+    "eslint": "^8.55.0",
+    "rollup": "^4.0.0"
   }
 }
