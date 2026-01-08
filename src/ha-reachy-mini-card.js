@@ -2,6 +2,8 @@
 // Version: 3.0.0
 // https://github.com/Desmond-Dong/ha-reachy-mini-card
 
+/* global OrbitControls THREE */
+
 (function () {
   'use strict';
 
