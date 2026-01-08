@@ -697,10 +697,11 @@
 
     getBasePath() {
       const scripts = document.getElementsByTagName('script');
-      const lastScript = scripts[scripts.length - 1];
-      const src = lastScript?.src || '';
-      if (src) {
-        return src.substring(0, src.lastIndexOf('/') + 1);
+      for (let i = 0; i < scripts.length; i++) {
+        const src = scripts[i].src || '';
+        if (src.includes('ha-reachy-mini-card.js')) {
+          return src.substring(0, src.lastIndexOf('/') + 1);
+        }
       }
       return '/hacsfiles/ha-reachy-mini-card/';
     }
