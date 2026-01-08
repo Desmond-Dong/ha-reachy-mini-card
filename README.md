@@ -5,22 +5,20 @@
 [![HACS](https://img.shields.io/badge/HACS-Default-orange.svg)](https://hacs.xyz/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-**Real-time 3D visualization with visual configuration**
+**Real-time 3D visualization with direct daemon connection**
 
-No YAML editing required! Everything configurable through the UI.
-
-![Reachy Mini 3D Card Preview](https://raw.githubusercontent.com/Desmond-Dong/ha-reachy-mini-card/main/assets/screenshot.svg)
+Connects directly to Reachy Mini daemon via WebSocket for ultra-low latency 3D visualization.
 
 </div>
 
 ## ✨ Features
 
-- **Real-time 3D Visualization** - See your robot's exact pose at 20Hz
-- **Visual Configuration Editor** - Click ⚙️ to configure, no YAML needed
-- **URDF-based Rendering** - Accurate 3D models using Three.js
+- **Direct WebSocket Connection** - Connects to Reachy Mini daemon at 20Hz
+- **Ultra-Low Latency** - 50ms updates (10x faster than ESPHome-based solutions)
+- **Real-time 3D Visualization** - Accurate URDF-based rendering with Three.js
 - **Interactive Controls** - Rotate, zoom, pan with mouse/touch
-- **Auto-discovery** - Automatically finds ESPHome entities
-- **Multiple Presets** - Default, Compact, Hidden, Panoramic
+- **Auto-reconnection** - Automatically reconnects on connection loss
+- **No ESPHome Required** - Direct connection, zero intermediate layer
 
 ## 📦 Installation
 
@@ -28,7 +26,7 @@ No YAML editing required! Everything configurable through the UI.
 
 - Home Assistant 2023.11.0 or later
 - HACS installed
-- Reachy Mini robot with ESPHome entities configured
+- Reachy Mini robot with daemon running
 
 ### Step 1: Install via HACS
 
@@ -38,129 +36,96 @@ No YAML editing required! Everything configurable through the UI.
 4. Click **Download** → select latest version
 5. Wait for installation to complete
 
-### Step 2: Add to Resources
+### Step 2: Add to Dashboard
 
-1. Go to **Settings** → **Dashboard** → **Resources**
-2. Click **Add Resource**
-3. Search and select `Reachy Mini 3D Card`
-4. Click **Add Resource**
-5. Refresh your browser (Ctrl+Shift+R)
-
-### Step 3: Add to Dashboard
-
-1. Edit your dashboard (click **...** → **Edit dashboard**)
-2. Click **Add Card** (+ button)
-3. Search for `Reachy Mini 3D Card`
-4. Click to add it
-5. Configure using visual editor (click ⚙️)
-6. Click **Save**
-
-## ⚙️ Configuration
-
-### Visual Editor (Recommended)
-
-Click the **⚙️** icon in the card's top-right corner:
-
-- **Entity Prefix**: Your ESPHome entity prefix (e.g., `reachy_mini`)
-- **Height**: Card height in pixels (200-800px)
-- **Show Controls**: Enable mouse/touch controls
-- **Auto Rotate**: Automatically rotate the view
-- **X-Ray Mode**: Show wireframe overlay
-- **Wireframe**: Display as wireframe only
-
-### Quick Presets
-
-Click preset buttons in the visual editor:
-
-| Preset | Height | Best For |
-|--------|--------|----------|
-| 🏠 Default | 400px | Standard dashboard |
-| 📱 Compact | 250px | Mobile/sidebar |
-| 👁️ Hidden | 300px | Background monitoring |
-| 🌐 Panoramic | 600px | Large displays |
-
-### YAML Configuration
-
-If you prefer YAML:
+Add the card to your Lovelace dashboard:
 
 ```yaml
 type: custom:reachy-mini-3d-card
-entity_prefix: reachy_mini  # Required
-height: 400                  # Optional: 200-800
-show_controls: true         # Optional: default true
-auto_rotate: false          # Optional: default false
-xray_mode: false            # Optional: default false
-wireframe: false            # Optional: default false
+daemon_host: localhost
+daemon_port: 3333
+height: 400
 ```
 
-## 🎮 Usage
+## ⚙️ Configuration
 
-### View Controls
+### Basic Configuration
 
-- **Rotate**: Left-click and drag
-- **Zoom**: Mouse wheel or pinch gesture
-- **Pan**: Right-click and drag (or two-finger drag)
-
-### Required ESPHome Entities
-
-The card automatically looks for these entities:
-
-```
-sensor.{prefix}_head_joints    # JSON array of joint angles
-sensor.{prefix}_head_pose      # JSON array of pose data
-number.{prefix}_antenna_left   # Left antenna angle
-number.{prefix}_antenna_right  # Right antenna angle
+```yaml
+type: custom:reachy-mini-3d-card
+daemon_host: localhost  # Reachy Mini daemon host
+daemon_port: 3333       # Daemon port
+height: 400             # Card height in pixels
 ```
 
-Example with prefix `reachy_mini`:
-- `sensor.reachy_mini_head_joints`
-- `sensor.reachy_mini_head_pose`
-- `number.reachy_mini_antenna_left`
-- `number.reachy_mini_antenna_right`
+### Remote Robot (WiFi)
+
+```yaml
+type: custom:reachy-mini-3d-card
+daemon_host: 192.168.1.100  # Your Reachy Mini IP
+daemon_port: 3333
+height: 400
+```
+
+### Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `daemon_host` | string | `localhost` | Reachy Mini daemon hostname or IP |
+| `daemon_port` | number | `3333` | Daemon WebSocket port |
+| `height` | number | `400` | Card height in pixels |
 
 ## 🔧 Troubleshooting
 
-### Card shows "Model loading failed"
+### Connection Status Indicator
 
-1. Check browser console (F12) for specific errors
-2. Verify all files are installed in `/hacsfiles/reachy-mini-3d-card/`
-3. Ensure ESPHome entities are available in HA
-4. Try clearing browser cache and hard refresh (Ctrl+Shift+R)
+The card shows a connection status indicator:
+- 🟢 **Green** = Connected and receiving data
+- 🟡 **Orange** = Connecting...
+- 🔴 **Red** = Connection error
 
-### Robot not moving
+### "Connection Failed" Error
 
-1. Verify entity prefix is correct
-2. Check that ESPHome entities are updating in Developer Tools → States
-3. Ensure Reachy Mini daemon is running
-4. Check 20Hz data stream is active
+1. **Check if daemon is running**:
+   ```bash
+   curl http://localhost:3333/api/state/full
+   ```
 
-### Performance issues
+2. **Verify daemon port**:
+   ```bash
+   netstat -an | grep 3333  # Linux/Mac
+   netstat -an | findstr 3333  # Windows
+   ```
 
-- Reduce card height
-- Disable X-Ray mode
-- Close other browser tabs
-- Use wired Ethernet connection
+3. **Check firewall** - Ensure port 3333 is not blocked
 
-## 📂 Project Structure
+### Robot Not Moving
 
-```
-reachy-mini-3d-card/
-├── reachy-mini-3d-card.js    # Compiled card code
-├── assets/
-│   ├── reachy-mini.urdf      # Robot kinematic definition
-│   └── meshes/               # 45 STL 3D model files
-├── hacs.json                 # HACS metadata
-├── README.md                 # This file
-├── CHANGELOG.md              # Version history
-└── LICENSE                   # Apache 2.0
-```
+1. Verify the connection status indicator is green
+2. Check browser console (F12) for errors
+3. Test daemon WebSocket:
+   ```javascript
+   // In browser console
+   const ws = new WebSocket('ws://localhost:3333/api/state/ws/full');
+   ws.onmessage = (e) => console.log(JSON.parse(e.data));
+   ```
 
-## 🛠️ Development
+### 3D Model Not Loading
+
+1. Check browser console for 404 errors
+2. Verify assets are loaded:
+   - Open Network tab in DevTools
+   - Look for `reachy-mini.urdf` and `.stl` files
+3. Try clearing browser cache (Ctrl+Shift+R)
+
+## 🏗️ Development
+
+### Build from Source
 
 ```bash
 # Clone repository
-git clone https://github.com/djhui5710/reachy-mini-3d-card.git
-cd reachy-mini-3d-card
+git clone https://github.com/Desmond-Dong/ha-reachy-mini-card.git
+cd ha-reachy-mini-card
 
 # Install dependencies
 npm install
@@ -168,38 +133,72 @@ npm install
 # Build
 npm run build
 
-# Watch mode
-npm run watch
+# Output in dist/reachy-mini-3d-card.js
 ```
 
-## 📝 License
+### Project Structure
 
-Apache License 2.0 - see [LICENSE](LICENSE) for details
+```
+ha-reachy-mini-card/
+├── src/
+│   └── reachy-mini-3d-card.js    # Main card implementation
+├── assets/
+│   ├── reachy-mini.urdf          # Robot definition
+│   └── meshes/                   # 45 STL files
+├── lib/
+│   └── urdf-loader.js            # URDF loader library
+├── rollup.config.js              # Build configuration
+└── package.json
+```
+
+## 📚 Technical Details
+
+### WebSocket Data Format
+
+The card connects to:
+```
+ws://${host}:${port}/api/state/ws/full?frequency=20&with_head_joints=true&with_antenna_positions=true
+```
+
+Expected data structure:
+```json
+{
+  "head_joints": [0, 0, 0, 0, 0, 0, 0],
+  "antennas_position": [0, 0],
+  "head_pose": [...],  // 4x4 matrix
+  "passive_joints": [...]  // 21 values
+}
+```
+
+### Dependencies
+
+- **Three.js** - 3D rendering engine
+- **URDFLoader** - Load robot models from URDF
+- **Home Assistant** - Web Components API
+
+## 📄 License
+
+Apache License 2.0 - see [LICENSE](LICENSE) file for details
+
+## 🙏 Credits
+
+- Built with reference to [reachy-mini-desktop-app](https://github.com/pollen-robotics/reachy-mini-desktop-app)
+- Uses [Three.js](https://threejs.org/) for 3D rendering
+- Uses [URDFLoader](https://github.com/gkjohnson/urdf-loader) for robot models
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/djhui5710/reachy-mini-3d-card/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/djhui5710/reachy-mini-3d-card/discussions)
-
-## 🔗 Related Projects
-
-- **Parent Project**: [reachy_mini_ha_voice](https://github.com/djhui5710/reachy_mini_ha_voice)
-- **Robot Manufacturer**: [Pollen Robotics](https://www.pollen-robotics.com/)
-- **Desktop App**: [reachy-mini-desktop-app](https://github.com/djhui5710/reachy_mini_ha_voice/tree/main/reachy-mini-desktop-app)
+- **Issues**: [GitHub Issues](https://github.com/Desmond-Dong/ha-reachy-mini-card/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Desmond-Dong/ha-reachy-mini-card/discussions)
 
 ---
 
 <div align="center">
 
-**Made with ❤️ for the Reachy Mini community**
+Made with ❤️ for the Reachy Mini community
 
 </div>
