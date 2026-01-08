@@ -281,6 +281,24 @@
       return this._config.height ? this._config.height / 50 : 8;
     }
 
+    getGridOptions() {
+      // Grid options for sections view (12 columns grid)
+      const height = this._config.height || 400;
+      const rows = Math.ceil(height / 50);
+      return {
+        rows: rows,
+        columns: 6,
+        min_rows: 4,
+        max_rows: 20,
+      };
+    }
+
+    set hass(hass) {
+      // Store Home Assistant instance (required by custom card API)
+      this._hass = hass;
+      // This card doesn't use HA entities directly, but set hass is required
+    }
+
     async connectedCallback() {
       this.render();
       await this.init();
