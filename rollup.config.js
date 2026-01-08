@@ -9,7 +9,7 @@ export default {
     format: 'iife',
     name: 'HaReachyMiniCard',
     sourcemap: true,
-    banner: '// Reachy Mini 3D Card - Direct Daemon Connection\n// Version: 2.0.0\n// https://github.com/Desmond-Dong/ha-reachy-mini-card\n'
+    banner: '// Reachy Mini 3D Card - Direct Daemon Connection\n// Version: 3.0.0\n// https://github.com/Desmond-Dong/ha-reachy-mini-card\n'
   },
   plugins: [
     resolve({

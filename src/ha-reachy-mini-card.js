@@ -2,6 +2,13 @@
 // Version: 3.0.0
 // https://github.com/Desmond-Dong/ha-reachy-mini-card
 
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+// Expose THREE and OrbitControls to window for use in IIFE
+window.THREE = THREE;
+window.OrbitControls = OrbitControls;
+
 (function () {
   'use strict';
 
@@ -348,90 +355,12 @@
 
     async init() {
       try {
-        await this.loadThreeJS();
         await this.connectWebSocket();
         await this.loadRobot();
       } catch (err) {
         console.error('Init error:', err);
         this.showError(err.message);
       }
-    }
-
-    async loadThreeJS() {
-      return new Promise((resolve, reject) => {
-        // 检查是否已经加载
-        if (window.THREE && window.OrbitControls) {
-          console.log('✅ Three.js already loaded');
-          resolve();
-          return;
-        }
-
-        console.log('📦 Loading Three.js...');
-
-        // 加载 Three.js
-        const threeScript = document.createElement('script');
-        threeScript.src = 'https://cdn.jsdelivr.net/npm/three@0.181.0/build/three.min.js';
-        threeScript.crossOrigin = 'anonymous';
-        threeScript.async = true;
-        
-        const timeout = setTimeout(() => {
-          console.error('❌ Three.js loading timeout');
-          reject(new Error('Three.js loading timeout'));
-        }, 30000);
-
-        threeScript.onload = () => {
-          clearTimeout(timeout);
-          console.log('✅ Three.js loaded');
-          
-          // 检查 THREE 是否正确加载
-          if (!window.THREE) {
-            console.error('❌ THREE not found after loading');
-            reject(new Error('THREE not found after loading'));
-            return;
-          }
-
-          // 加载 OrbitControls
-          const orbitScript = document.createElement('script');
-          orbitScript.src = 'https://cdn.jsdelivr.net/npm/three@0.181.0/examples/js/controls/OrbitControls.js';
-          orbitScript.crossOrigin = 'anonymous';
-          orbitScript.async = true;
-          
-          const orbitTimeout = setTimeout(() => {
-            console.error('❌ OrbitControls loading timeout');
-            reject(new Error('OrbitControls loading timeout'));
-          }, 30000);
-
-          orbitScript.onload = () => {
-            clearTimeout(orbitTimeout);
-            console.log('✅ OrbitControls loaded');
-            
-            // 检查 OrbitControls 是否正确加载
-            if (!window.OrbitControls) {
-              console.error('❌ OrbitControls not found after loading');
-              reject(new Error('OrbitControls not found after loading'));
-              return;
-            }
-            
-            resolve();
-          };
-          
-          orbitScript.onerror = (e) => {
-            clearTimeout(orbitTimeout);
-            console.error('❌ Failed to load OrbitControls:', e);
-            reject(new Error('Failed to load OrbitControls'));
-          };
-          
-          document.head.appendChild(orbitScript);
-        };
-        
-        threeScript.onerror = (e) => {
-          clearTimeout(timeout);
-          console.error('❌ Failed to load Three.js:', e);
-          reject(new Error('Failed to load Three.js'));
-        };
-        
-        document.head.appendChild(threeScript);
-      });
     }
 
     async connectWebSocket() {
@@ -641,8 +570,6 @@
       const container = this.shadowRoot.querySelector('#container');
       const canvas = document.createElement('canvas');
       container.appendChild(canvas);
-
-      const THREE = window.THREE;
       
       // Scene
       this._scene = new THREE.Scene();
@@ -663,7 +590,7 @@
       this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
       // Controls
-      this._controls = new window.OrbitControls(this._camera, canvas);
+      this._controls = new OrbitControls(this._camera, canvas);
       this._controls.enableDamping = true;
       this._controls.dampingFactor = 0.05;
       this._controls.minDistance = 0.2;
