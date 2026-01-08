@@ -358,7 +358,7 @@
     }
 
     async loadThreeJS() {
-      return new Promise((resolve, reject) => {
+      return new Promise(async (resolve, reject) => {
         const basePath = this.getBasePath();
         
         // Check if already loaded
@@ -370,41 +370,24 @@
 
         console.log('📦 Loading Three.js from lib/three.core.js...');
         
-        // Load three.core.js - this is a complete standalone file
-        const script = document.createElement('script');
-        script.src = `${basePath}lib/three.core.js`;
-        script.type = 'module';
-        
-        script.onload = () => {
+        try {
+          // Use dynamic import to load Three.js as a module
+          const threeModule = await import(`${basePath}lib/three.core.js`);
+          
+          // Create global THREE object with all exports
+          window.THREE = threeModule;
+          
           console.log('✅ Three.js loaded');
           
-          // Create global THREE object
-          window.THREE = THREE;
+          // Load OrbitControls using dynamic import
+          await import(`${basePath}lib/OrbitControls.js`);
           
-          // Load OrbitControls
-          const script2 = document.createElement('script');
-          script2.src = `${basePath}lib/OrbitControls.js`;
-          script2.type = 'module';
-          
-          script2.onload = () => {
-            console.log('✅ OrbitControls loaded');
-            resolve();
-          };
-          
-          script2.onerror = () => {
-            console.error('❌ Failed to load OrbitControls');
-            reject(new Error('Failed to load OrbitControls'));
-          };
-          
-          document.head.appendChild(script2);
-        };
-        
-        script.onerror = () => {
-          console.error('❌ Failed to load Three.js');
-          reject(new Error('Failed to load Three.js'));
-        };
-        
-        document.head.appendChild(script);
+          console.log('✅ OrbitControls loaded');
+          resolve();
+        } catch (error) {
+          console.error('❌ Failed to load Three.js:', error);
+          reject(new Error('Failed to load Three.js: ' + error.message));
+        }
       });
     }
 
