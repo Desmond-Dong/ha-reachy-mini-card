@@ -50,8 +50,7 @@ jobs:
           cp node_modules/urdf-loader/src/URDFLoader.js lib/urdf-loader.js
           
           # Copy Three.js files
-          cp node_modules/three/build/three.core.min.js lib/three.core.min.js
-          cp node_modules/three/build/three.module.min.js lib/three.js
+          cp node_modules/three/build/three.core.js lib/three.core.js
           cp node_modules/three/examples/jsm/controls/OrbitControls.js lib/OrbitControls.js
           
           echo "✅ Assets and lib copied"
@@ -61,8 +60,7 @@ jobs:
         run: |
           echo "🗜️ Creating gzip compressed files..."
           gzip -k -9 ha-reachy-mini-card.js
-          gzip -k -9 lib/three.js
-          gzip -k -9 lib/three.core.min.js
+          gzip -k -9 lib/three.core.js
           gzip -k -9 lib/OrbitControls.js
           gzip -k -9 lib/urdf-loader.js
           gzip -k -9 lib/URDFClasses.js
