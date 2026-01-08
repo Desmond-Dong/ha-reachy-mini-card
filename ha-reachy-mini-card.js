@@ -6,9 +6,12 @@
   'use strict';
 
   // Reachy Mini 3D Card - Direct Daemon Connection
-  // Home Assistant Lovelace Custom Card
+  // Version: 2.0.0
+  // https://github.com/Desmond-Dong/ha-reachy-mini-card
 
-  // 注册 custom card
+  (function () {
+
+    // 注册 custom card
   window.customCards = window.customCards || [];
   window.customCards.push({
     type: 'reachy-mini-3d-card',
@@ -120,28 +123,18 @@
     }
 
     async loadScripts() {
-      const load = (src) => new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) return resolve();
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = resolve;
-        script.onerror = () => reject(new Error(`Failed to load ${src}`));
-        document.head.appendChild(script);
-      });
-
-      if (!window.THREE) await load('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js');
-      if (!window.THREE.OrbitControls) {
-        await load('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js');
-      }
-      if (!window.THREE.STLLoader) {
-        await load('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/STLLoader.js');
-      }
+      // Three.js 和 URDFLoader 会通过 ES module 动态导入
+      // 不需要预先加载任何脚本
     }
 
-    initThreeJS() {
+    async initThreeJS() {
       const container = this.shadowRoot.querySelector('#container');
       const canvas = document.createElement('canvas');
       container.appendChild(canvas);
+
+      // 动态导入 Three.js 和依赖
+      const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
+      const { OrbitControls } = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js');
 
       // 场景
       this._scene = new THREE.Scene();
@@ -157,7 +150,7 @@
       this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
       // 控制器
-      this._controls = new THREE.OrbitControls(this._camera, canvas);
+      this._controls = new OrbitControls(this._camera, canvas);
       this._controls.enableDamping = true;
       this._controls.minDistance = 0.2;
       this._controls.maxDistance = 1.0;
@@ -377,6 +370,8 @@
   }
 
   customElements.define('reachy-mini-3d-card-editor', ReachyMini3DCardEditor);
+
+  })();
 
 })();
 //# sourceMappingURL=ha-reachy-mini-card.js.map
