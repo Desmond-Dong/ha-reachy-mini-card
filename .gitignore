@@ -8,8 +8,8 @@ pnpm-lock.yaml
 dist/
 build/
 # Don't ignore the main built file
-!reachy-mini-3d-card.js
-!reachy-mini-3d-card.js.map
+!ha-reachy-mini-card.js
+!ha-reachy-mini-card.js.map
 *.min.js
 
 # Editor directories and files

@@ -55,14 +55,14 @@ jobs:
           mkdir -p release
 
           # 复制所有必需文件
-          cp reachy-mini-3d-card.js release/
-          cp reachy-mini-3d-card.js.map release/
+          cp ha-reachy-mini-card.js release/
+          cp ha-reachy-mini-card.js.map release/
           cp -r assets release/
           cp -r lib release/
           cp README.md release/
           cp hacs.json release/
 
-          # 创建 zip 包，文件名要与 hacs.json 中的 filename 一致
+          # 创建 zip 包
           cd release
           zip -r ../ha-reachy-mini-card.zip .
           cd ..
@@ -75,8 +75,8 @@ jobs:
         with:
           name: reachy-mini-3d-card
           path: |
-            reachy-mini-3d-card.js
-            reachy-mini-3d-card.js.map
+            ha-reachy-mini-card.js
+            ha-reachy-mini-card.js.map
             assets/
             lib/
           retention-days: 30
@@ -86,7 +86,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add reachy-mini-3d-card.js reachy-mini-3d-card.js.map lib/ hacs.json
+          git add ha-reachy-mini-card.js ha-reachy-mini-card.js.map lib/ hacs.json
           git diff --staged --quiet || git commit -m "chore: build [skip ci]"
           git push
 
@@ -96,7 +96,7 @@ jobs:
         with:
           files: |
             ha-reachy-mini-card.zip
-            reachy-mini-3d-card.js
+            ha-reachy-mini-card.js
           body: |
             # 🎉 Reachy Mini 3D Card ${{ github.ref_name }}
 
