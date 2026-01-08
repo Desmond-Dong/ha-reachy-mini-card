@@ -1,6 +1,5 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import terser from '@rollup/plugin-terser';
 
 export default {
   input: 'src/reachy-mini-3d-card.js',
@@ -16,22 +15,6 @@ export default {
       browser: true,
       preferBuiltins: false
     }),
-    commonjs(),
-    terser({
-      keep_classnames: true,
-      keep_fnames: false,
-      compress: {
-        defaults: false,
-        // 禁用可能导致意外添加属性的优化
-        unsafe: false,
-        side_effects: false
-      },
-      mangle: {
-        properties: false
-      },
-      format: {
-        comments: /^!/ // 保留以 ! 开头的注释
-      }
-    })
+    commonjs()
   ]
 };
