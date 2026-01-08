@@ -1,4 +1,4 @@
-name: Build and Release Reachy Mini 3D Card V2
+name: Build and Release Reachy Mini 3D Card
 
 on:
   push:
@@ -74,7 +74,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: reachy-mini-3d-card
+          name: ha-reachy-mini-card
           path: |
             ha-reachy-mini-card.js
             ha-reachy-mini-card.js.map
@@ -101,16 +101,14 @@ jobs:
           body: |
             # 🎉 Reachy Mini 3D Card ${{ github.ref_name }}
 
-            ## 🚀 Major Update - V2.0.0: Direct Daemon Connection!
+            ## 🚀 Major Update - V3.0.0: Unified Naming Convention!
 
-            This version removes the ESPHome dependency and connects directly to your Reachy Mini daemon for **10x lower latency** and **real-time updates**!
+            This version unifies all names to `ha-reachy-mini-card` for better consistency.
 
-            ✨ **New Features:**
-            - 🔌 Direct WebSocket connection to Reachy Mini daemon (ws://localhost:3333)
-            - ⚡ **10x lower latency**: 50ms (down from 500ms)
-            - 🟢 Real-time connection status indicator
-            - 🔄 Auto-reconnection on network issues
-            - 📦 **No ESPHome required!**
+            ✨ **Changes:**
+            - 🔧 Rename card type from `custom:reachy-mini-3d-card` to `custom:ha-reachy-mini-card`
+            - 📝 Unify all names to `ha-reachy-mini-card`
+            - 🔄 Update all documentation and examples
 
             ## 📦 Installation
 
@@ -123,11 +121,11 @@ jobs:
 
             ### Manual Installation
             1. Download `ha-reachy-mini-card.zip`
-            2. Extract to `/config/www/community/reachy-mini-3d-card/`
+            2. Extract to `/config/www/community/ha-reachy-mini-card/`
             3. Add to resources:
             ```yaml
             resources:
-              - url: /community/reachy-mini-3d-card/reachy-mini-3d-card.js
+              - url: /community/ha-reachy-mini-card/ha-reachy-mini-card.js
                 type: module
             ```
 
@@ -135,50 +133,55 @@ jobs:
 
             ### Quick Start (USB Mode)
             ```yaml
-            type: custom:reachy-mini-3d-card
+            type: custom:ha-reachy-mini-card
             daemon_host: localhost
-            daemon_port: 3333
+            daemon_port: 8000
             height: 400
             ```
 
             ### WiFi Mode (Remote Reachy Mini)
             ```yaml
-            type: custom:reachy-mini-3d-card
+            type: custom:ha-reachy-mini-card
             daemon_host: 192.168.1.100  # Your Reachy Mini IP
-            daemon_port: 3333
+            daemon_port: 8000
             height: 400
             ```
 
             ### All Options
             - `daemon_host` - Daemon hostname/IP (default: `localhost`)
-            - `daemon_port` - Daemon port (default: `3333`)
+            - `daemon_port` - Daemon port (default: `8000`)
             - `height` - Card height in pixels (default: `400`)
-            - `show_controls` - Show control buttons (default: `true`)
-            - `auto_rotate` - Auto-rotate view (default: `false`)
+            - `enable_passive_joints` - Enable passive joints (default: `true`)
+            - `enable_head_pose` - Enable head pose matrix (default: `true`)
+            - `background_color` - Background color (default: `#f5f5f5`)
+            - `enable_grid` - Show grid (default: `true`)
+            - `camera_distance` - Camera distance (default: `0.5`)
 
-            ## 🔄 Migration from V1
+            ## 🔄 Migration from V2
 
-            If you're upgrading from V1 (ESPHome version):
+            If you're upgrading from V2:
 
-            1. **Update configuration** - Replace `entity_prefix` with `daemon_host`:
+            1. **Update configuration** - Change card type:
             ```yaml
-            # Old V1 config
-            entity_prefix: reachy_mini
+            # Old V2 config
+            type: custom:reachy-mini-3d-card
 
-            # New V2 config
-            daemon_host: localhost
-            daemon_port: 3333
+            # New V3 config
+            type: custom:ha-reachy-mini-card
             ```
 
-            2. **Remove ESPHome** (optional):
-               - Delete ESPHome device in HA
-               - Remove ESPHome YAML configuration
+            2. **Refresh browser** - Press Ctrl+Shift+R to clear cache
 
-            See [MIGRATION_GUIDE.md](https://github.com/Desmond-Dong/ha-reachy-mini-card/blob/main/MIGRATION_GUIDE.md) for detailed instructions.
+            See [CHANGELOG.md](https://github.com/Desmond-Dong/ha-reachy-mini-card/blob/main/CHANGELOG.md) for full history.
 
             ## 📊 What's Changed
 
-            ### 🆕 V2.0.0 (Current)
+            ### 🆕 V3.0.0 (Current)
+            - 🔧 Unified naming convention to `ha-reachy-mini-card`
+            - 📝 Updated all documentation and examples
+            - 🔄 Improved consistency across all files
+
+            ### 🆕 V2.0.0
             - ✨ Direct WebSocket connection to daemon
             - ⚡ 10x latency improvement (500ms → 50ms)
             - 🟢 Real-time connection status
@@ -190,12 +193,17 @@ jobs:
 
             ## 🐛 Troubleshooting
 
+            ### "Card not found" error
+            1. Refresh browser (Ctrl+Shift+R)
+            2. Clear HACS cache
+            3. Check browser console (F12) for errors
+
             ### "Connection Failed" error
             1. Check if Reachy Mini daemon is running:
                ```bash
-               curl http://localhost:3333/api/state/full
+               curl http://localhost:8000/api/state/full
                ```
-            2. Verify firewall allows port 3333
+            2. Verify firewall allows port 8000
             3. Check browser console (F12) for detailed errors
 
             ### Robot not moving

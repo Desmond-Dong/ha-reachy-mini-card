@@ -13,6 +13,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Recording/playback of poses
 - Export 3D model as GLTF
 
+## [3.0.0] - 2025-01-08
+
+### Breaking Changes
+- 🔧 Rename card type from `custom:reachy-mini-3d-card` to `custom:ha-reachy-mini-card`
+- 📝 Unify all names to `ha-reachy-mini-card` for consistency
+
+### Changed
+- Rename source file from `reachy-mini-3d-card.js` to `ha-reachy-mini-card.js`
+- Update package.json, rollup.config.js, and build scripts
+- Update all documentation and examples
+
+### Migration from V2
+
+**Old V2 config:**
+```yaml
+type: custom:reachy-mini-3d-card
+daemon_host: localhost
+daemon_port: 3333
+```
+
+**New V3 config:**
+```yaml
+type: custom:ha-reachy-mini-card
+daemon_host: localhost
+daemon_port: 3333
+```
+
 ## [2.0.0] - 2025-01-08
 
 ### Major Changes
@@ -47,9 +74,9 @@ type: custom:reachy-mini-3d-card
 entity_prefix: reachy_mini
 ```
 
-**New V2 config:**
+**New V2 config (now V3):**
 ```yaml
-type: custom:reachy-mini-3d-card
+type: custom:ha-reachy-mini-card
 daemon_host: localhost
 daemon_port: 3333
 ```

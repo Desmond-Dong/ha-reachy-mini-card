@@ -29,7 +29,7 @@ echo "📁 Creating distribution structure..."
 mkdir -p "$BUILD_DIR"
 
 # Copy main card file
-cp reachy-mini-3d-card.js "$BUILD_DIR/"
+cp ha-reachy-mini-card.js "$BUILD_DIR/"
 
 # Copy assets
 echo "📦 Copying assets..."
@@ -60,7 +60,8 @@ lovelace:
 
 \`\`\`yaml
 type: custom:ha-reachy-mini-card
-entity_prefix: reachy_mini
+daemon_host: localhost
+daemon_port: 8000
 \`\`\`
 
 ## Configuration
