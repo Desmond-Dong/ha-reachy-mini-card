@@ -84,19 +84,17 @@ This card connects directly to your Reachy Mini daemon - no ESPHome required!
 
 ### Configuration
 
-```yaml
 type: custom:reachy-mini-3d-card
 daemon_host: localhost    # or your Reachy Mini IP
 daemon_port: 3333
 height: 400
-```
 
 ### Features
 
-- ✅ Direct WebSocket connection (20Hz updates)
-- ✅ Real-time connection status indicator
-- ✅ Auto-reconnection on network issues
-- ✅ Support for all robot joints and poses
+- Direct WebSocket connection (20Hz updates)
+- Real-time connection status indicator
+- Auto-reconnection on network issues
+- Support for all robot joints and poses
 
 ### Documentation
 
