@@ -25,6 +25,217 @@
     'passive_7_x', 'passive_7_y', 'passive_7_z',
   ];
 
+  // 图形化配置编辑器 - 必须在主卡之前定义和注册
+  class ReachyMini3DCardEditor extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+    }
+
+    setConfig(config) {
+      this._config = config;
+      this.render();
+    }
+
+    render() {
+      const config = this._config || {};
+
+      this.shadowRoot.innerHTML = `
+      <style>
+        :host { display: block; }
+        .form-row {
+          display: flex;
+          flex-direction: column;
+          margin-bottom: 12px;
+        }
+        label {
+          font-size: 14px;
+          font-weight: 500;
+          margin-bottom: 4px;
+          color: var(--primary-text-color);
+        }
+        input[type="text"],
+        input[type="number"] {
+          width: 100%;
+          padding: 8px;
+          border: 1px solid var(--primary-color);
+          border-radius: 4px;
+          background: var(--card-background-color);
+          color: var(--primary-text-color);
+          box-sizing: border-box;
+        }
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+          outline: none;
+          border-color: var(--accent-color);
+        }
+        .checkbox-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+        .checkbox-row input[type="checkbox"] {
+          width: auto;
+          margin: 0;
+        }
+        .checkbox-row label {
+          margin-bottom: 0;
+          flex: 1;
+        }
+        .hint {
+          font-size: 12px;
+          color: var(--secondary-text-color);
+          margin-top: 4px;
+        }
+        .section-title {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--primary-text-color);
+          margin-top: 16px;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+      </style>
+      
+      <div class="section-title">Connection</div>
+      
+      <div class="form-row">
+        <label for="host">Daemon Host</label>
+        <input
+          id="host"
+          type="text"
+          value="${config.daemon_host || 'localhost'}"
+          placeholder="localhost or IP address"
+        />
+        <div class="hint">Reachy Mini daemon hostname or IP address</div>
+      </div>
+      
+      <div class="form-row">
+        <label for="port">Daemon Port</label>
+        <input
+          id="port"
+          type="number"
+          value="${config.daemon_port || 8000}"
+          placeholder="8000"
+        />
+        <div class="hint">WebSocket port (default: 8000)</div>
+      </div>
+      
+      <div class="section-title">Display</div>
+      
+      <div class="form-row">
+        <label for="height">Card Height (px)</label>
+        <input
+          id="height"
+          type="number"
+          value="${config.height || 400}"
+          placeholder="400"
+        />
+        <div class="hint">Height of the card in pixels</div>
+      </div>
+      
+      <div class="form-row">
+        <label for="background">Background Color</label>
+        <input
+          id="background"
+          type="text"
+          value="${config.background_color || '#f5f5f5'}"
+          placeholder="#f5f5f5"
+        />
+        <div class="hint">Background color (hex code)</div>
+      </div>
+      
+      <div class="form-row">
+        <label for="camera_distance">Camera Distance</label>
+        <input
+          id="camera_distance"
+          type="number"
+          step="0.1"
+          value="${config.camera_distance || 0.5}"
+          placeholder="0.5"
+        />
+        <div class="hint">Initial camera distance (0.2 - 1.5)</div>
+      </div>
+      
+      <div class="section-title">Features</div>
+      
+      <div class="checkbox-row">
+        <input type="checkbox" id="enable_passive" ${config.enable_passive_joints !== false ? 'checked' : ''}>
+        <label for="enable_passive">Enable Passive Joints</label>
+      </div>
+      <div class="hint">Show Stewart platform passive joints (requires daemon support)</div>
+      
+      <div class="checkbox-row">
+        <input type="checkbox" id="enable_pose" ${config.enable_head_pose !== false ? 'checked' : ''}>
+        <label for="enable_pose">Enable Head Pose</label>
+      </div>
+      <div class="hint">Use 4x4 pose matrix for head positioning</div>
+      
+      <div class="checkbox-row">
+        <input type="checkbox" id="enable_grid" ${config.enable_grid !== false ? 'checked' : ''}>
+        <label for="enable_grid">Show Grid</label>
+      </div>
+      <div class="hint">Display ground grid helper</div>
+    `;
+
+      // 监听输入变化
+      this.shadowRoot.getElementById('host').addEventListener('change', (e) => {
+        this._config = { ...this._config, daemon_host: e.target.value };
+        this.dispatchConfig();
+      });
+
+      this.shadowRoot.getElementById('port').addEventListener('change', (e) => {
+        this._config = { ...this._config, daemon_port: parseInt(e.target.value) };
+        this.dispatchConfig();
+      });
+
+      this.shadowRoot.getElementById('height').addEventListener('change', (e) => {
+        this._config = { ...this._config, height: parseInt(e.target.value) };
+        this.dispatchConfig();
+      });
+
+      this.shadowRoot.getElementById('background').addEventListener('change', (e) => {
+        this._config = { ...this._config, background_color: e.target.value };
+        this.dispatchConfig();
+      });
+
+      this.shadowRoot.getElementById('camera_distance').addEventListener('change', (e) => {
+        this._config = { ...this._config, camera_distance: parseFloat(e.target.value) };
+        this.dispatchConfig();
+      });
+
+      this.shadowRoot.getElementById('enable_passive').addEventListener('change', (e) => {
+        this._config = { ...this._config, enable_passive_joints: e.target.checked };
+        this.dispatchConfig();
+      });
+
+      this.shadowRoot.getElementById('enable_pose').addEventListener('change', (e) => {
+        this._config = { ...this._config, enable_head_pose: e.target.checked };
+        this.dispatchConfig();
+      });
+
+      this.shadowRoot.getElementById('enable_grid').addEventListener('change', (e) => {
+        this._config = { ...this._config, enable_grid: e.target.checked };
+        this.dispatchConfig();
+      });
+    }
+
+    dispatchConfig() {
+      const event = new CustomEvent('config-changed', {
+        detail: { config: this._config },
+        bubbles: true,
+        composed: true
+      });
+      this.dispatchEvent(event);
+    }
+  }
+
+  // 先注册编辑器
+  customElements.define('reachy-mini-3d-card-editor', ReachyMini3DCardEditor);
+
+  // 主卡类
   class ReachyMini3DCard extends HTMLElement {
     constructor() {
       super();
@@ -514,214 +725,5 @@
   }
 
   customElements.define('reachy-mini-3d-card', ReachyMini3DCard);
-
-// 图形化配置编辑器
-class ReachyMini3DCardEditor extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-  }
-
-  setConfig(config) {
-    this._config = config;
-    this.render();
-  }
-
-  render() {
-    const config = this._config || {};
-
-    this.shadowRoot.innerHTML = `
-      <style>
-        :host { display: block; }
-        .form-row {
-          display: flex;
-          flex-direction: column;
-          margin-bottom: 12px;
-        }
-        label {
-          font-size: 14px;
-          font-weight: 500;
-          margin-bottom: 4px;
-          color: var(--primary-text-color);
-        }
-        input[type="text"],
-        input[type="number"] {
-          width: 100%;
-          padding: 8px;
-          border: 1px solid var(--primary-color);
-          border-radius: 4px;
-          background: var(--card-background-color);
-          color: var(--primary-text-color);
-          box-sizing: border-box;
-        }
-        input[type="text"]:focus,
-        input[type="number"]:focus {
-          outline: none;
-          border-color: var(--accent-color);
-        }
-        .checkbox-row {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 8px;
-        }
-        .checkbox-row input[type="checkbox"] {
-          width: auto;
-          margin: 0;
-        }
-        .checkbox-row label {
-          margin-bottom: 0;
-          flex: 1;
-        }
-        .hint {
-          font-size: 12px;
-          color: var(--secondary-text-color);
-          margin-top: 4px;
-        }
-        .section-title {
-          font-size: 13px;
-          font-weight: 600;
-          color: var(--primary-text-color);
-          margin-top: 16px;
-          margin-bottom: 8px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-      </style>
-      
-      <div class="section-title">Connection</div>
-      
-      <div class="form-row">
-        <label for="host">Daemon Host</label>
-        <input
-          id="host"
-          type="text"
-          value="${config.daemon_host || 'localhost'}"
-          placeholder="localhost or IP address"
-        />
-        <div class="hint">Reachy Mini daemon hostname or IP address</div>
-      </div>
-      
-      <div class="form-row">
-        <label for="port">Daemon Port</label>
-        <input
-          id="port"
-          type="number"
-          value="${config.daemon_port || 8000}"
-          placeholder="8000"
-        />
-        <div class="hint">WebSocket port (default: 8000)</div>
-      </div>
-      
-      <div class="section-title">Display</div>
-      
-      <div class="form-row">
-        <label for="height">Card Height (px)</label>
-        <input
-          id="height"
-          type="number"
-          value="${config.height || 400}"
-          placeholder="400"
-        />
-        <div class="hint">Height of the card in pixels</div>
-      </div>
-      
-      <div class="form-row">
-        <label for="background">Background Color</label>
-        <input
-          id="background"
-          type="text"
-          value="${config.background_color || '#f5f5f5'}"
-          placeholder="#f5f5f5"
-        />
-        <div class="hint">Background color (hex code)</div>
-      </div>
-      
-      <div class="form-row">
-        <label for="camera_distance">Camera Distance</label>
-        <input
-          id="camera_distance"
-          type="number"
-          step="0.1"
-          value="${config.camera_distance || 0.5}"
-          placeholder="0.5"
-        />
-        <div class="hint">Initial camera distance (0.2 - 1.5)</div>
-      </div>
-      
-      <div class="section-title">Features</div>
-      
-      <div class="checkbox-row">
-        <input type="checkbox" id="enable_passive" ${config.enable_passive_joints !== false ? 'checked' : ''}>
-        <label for="enable_passive">Enable Passive Joints</label>
-      </div>
-      <div class="hint">Show Stewart platform passive joints (requires daemon support)</div>
-      
-      <div class="checkbox-row">
-        <input type="checkbox" id="enable_pose" ${config.enable_head_pose !== false ? 'checked' : ''}>
-        <label for="enable_pose">Enable Head Pose</label>
-      </div>
-      <div class="hint">Use 4x4 pose matrix for head positioning</div>
-      
-      <div class="checkbox-row">
-        <input type="checkbox" id="enable_grid" ${config.enable_grid !== false ? 'checked' : ''}>
-        <label for="enable_grid">Show Grid</label>
-      </div>
-      <div class="hint">Display ground grid helper</div>
-    `;
-
-    // 监听输入变化
-    this.shadowRoot.getElementById('host').addEventListener('change', (e) => {
-      this._config = { ...this._config, daemon_host: e.target.value };
-      this.dispatchConfig();
-    });
-
-    this.shadowRoot.getElementById('port').addEventListener('change', (e) => {
-      this._config = { ...this._config, daemon_port: parseInt(e.target.value) };
-      this.dispatchConfig();
-    });
-
-    this.shadowRoot.getElementById('height').addEventListener('change', (e) => {
-      this._config = { ...this._config, height: parseInt(e.target.value) };
-      this.dispatchConfig();
-    });
-
-    this.shadowRoot.getElementById('background').addEventListener('change', (e) => {
-      this._config = { ...this._config, background_color: e.target.value };
-      this.dispatchConfig();
-    });
-
-    this.shadowRoot.getElementById('camera_distance').addEventListener('change', (e) => {
-      this._config = { ...this._config, camera_distance: parseFloat(e.target.value) };
-      this.dispatchConfig();
-    });
-
-    this.shadowRoot.getElementById('enable_passive').addEventListener('change', (e) => {
-      this._config = { ...this._config, enable_passive_joints: e.target.checked };
-      this.dispatchConfig();
-    });
-
-    this.shadowRoot.getElementById('enable_pose').addEventListener('change', (e) => {
-      this._config = { ...this._config, enable_head_pose: e.target.checked };
-      this.dispatchConfig();
-    });
-
-    this.shadowRoot.getElementById('enable_grid').addEventListener('change', (e) => {
-      this._config = { ...this._config, enable_grid: e.target.checked };
-      this.dispatchConfig();
-    });
-  }
-
-  dispatchConfig() {
-    const event = new CustomEvent('config-changed', {
-      detail: { config: this._config },
-      bubbles: true,
-      composed: true
-    });
-    this.dispatchEvent(event);
-  }
-}
-
-customElements.define('reachy-mini-3d-card-editor', ReachyMini3DCardEditor);
 
 })();
