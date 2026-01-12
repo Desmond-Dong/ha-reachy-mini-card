@@ -38,109 +38,78 @@ jobs:
           echo "Building Reachy Mini 3D Card..."
           npm run build
           echo "Build completed successfully"
-          ls -la ha-reachy-mini-card.js
 
-      - name: Copy assets
+      - name: Create dist directory structure
         run: |
-          echo "Copying assets and libraries..."
+          echo "📦 Creating dist directory for HACS..."
           
-          # Copy URDFLoader files
-          cp node_modules/urdf-loader/src/URDFClasses.js lib/URDFClasses.js
-          cp node_modules/urdf-loader/src/URDFDragControls.js lib/URDFDragControls.js
-          cp node_modules/urdf-loader/src/URDFLoader.js lib/urdf-loader.js
+          # Create dist directory
+          mkdir -p dist/lib
+          mkdir -p dist/assets/meshes
+          
+          # Copy main JS file
+          cp ha-reachy-mini-card.js dist/
+          cp ha-reachy-mini-card.js.map dist/ 2>/dev/null || true
+          
+          # Copy URDF and meshes
+          cp assets/reachy-mini.urdf dist/assets/
+          cp assets/meshes/*.stl dist/assets/meshes/
+          
+          # Copy URDFLoader files from node_modules
+          cp node_modules/urdf-loader/src/URDFClasses.js dist/lib/URDFClasses.js
+          cp node_modules/urdf-loader/src/URDFDragControls.js dist/lib/URDFDragControls.js
+          cp node_modules/urdf-loader/src/URDFLoader.js dist/lib/urdf-loader.js
           
           # Copy Three.js files
-          cp node_modules/three/build/three.core.js lib/three.core.js
-          cp node_modules/three/examples/jsm/controls/OrbitControls.js lib/OrbitControls.js
-          cp node_modules/three/examples/jsm/loaders/STLLoader.js lib/STLLoader.js
+          cp node_modules/three/build/three.core.js dist/lib/three.core.js
+          cp node_modules/three/examples/jsm/controls/OrbitControls.js dist/lib/OrbitControls.js
+          cp node_modules/three/examples/jsm/loaders/STLLoader.js dist/lib/STLLoader.js
           
           # Fix import statements to use relative paths
-          sed -i.bak "s/from 'three'/from '.\/three.core.js'/g" lib/OrbitControls.js
-          sed -i.bak "s/from 'three'/from '.\/three.core.js'/g" lib/URDFClasses.js
-          sed -i.bak "s/from 'three'/from '.\/three.core.js'/g" lib/URDFDragControls.js
-          sed -i.bak "s/from 'three'/from '.\/three.core.js'/g" lib/STLLoader.js
-          sed -i.bak "s/from 'three'/from '.\/three.core.js'/g" lib/urdf-loader.js
-          sed -i.bak "s|from 'three/examples/jsm/loaders/STLLoader.js'|from './STLLoader.js'|g" lib/urdf-loader.js
+          sed -i "s/from 'three'/from '.\/three.core.js'/g" dist/lib/OrbitControls.js
+          sed -i "s/from 'three'/from '.\/three.core.js'/g" dist/lib/URDFClasses.js
+          sed -i "s/from 'three'/from '.\/three.core.js'/g" dist/lib/URDFDragControls.js
+          sed -i "s/from 'three'/from '.\/three.core.js'/g" dist/lib/STLLoader.js
+          sed -i "s/from 'three'/from '.\/three.core.js'/g" dist/lib/urdf-loader.js
+          sed -i "s|from 'three/examples/jsm/loaders/STLLoader.js'|from './STLLoader.js'|g" dist/lib/urdf-loader.js
           
           # Remove ColladaLoader import (not used)
-          sed -i.bak "/import.*ColladaLoader/d" lib/urdf-loader.js
+          sed -i "/import.*ColladaLoader/d" dist/lib/urdf-loader.js
           
-          # Comment out ColladaLoader usage
-          sed -i.bak "/const loader = new ColladaLoader/,+2d" lib/urdf-loader.js
-          
-          # Remove backup files
-          rm -f lib/*.bak
-          
-          # Verify all imports are fixed
-          echo "🔍 Verifying import statements..."
-          grep -n "from 'three'" lib/*.js || echo "✅ No 'from three' imports found"
-          grep -n "from './three.core.js'" lib/*.js | head -10 || echo "⚠️ No relative imports found"
-          
-          echo "✅ Assets and lib copied"
-          ls -la lib/
+          echo "✅ dist directory created"
+          echo "📁 Directory structure:"
+          find dist -type f | head -20
+          echo "..."
+          echo "Total files: $(find dist -type f | wc -l)"
 
       - name: Create gzip files
         run: |
           echo "🗜️ Creating gzip compressed files..."
           
-          # Remove existing .gz files first
-          rm -f ha-reachy-mini-card.js.gz
-          rm -f lib/*.gz
-          
-          # Create new gzip files
-          gzip -k -9 ha-reachy-mini-card.js
-          gzip -k -9 lib/three.core.js
-          gzip -k -9 lib/OrbitControls.js
-          gzip -k -9 lib/urdf-loader.js
-          gzip -k -9 lib/URDFClasses.js
-          gzip -k -9 lib/URDFDragControls.js
-          gzip -k -9 lib/STLLoader.js
+          gzip -k -9 dist/ha-reachy-mini-card.js
+          gzip -k -9 dist/lib/three.core.js
+          gzip -k -9 dist/lib/OrbitControls.js
+          gzip -k -9 dist/lib/urdf-loader.js
+          gzip -k -9 dist/lib/URDFClasses.js
+          gzip -k -9 dist/lib/URDFDragControls.js
+          gzip -k -9 dist/lib/STLLoader.js
           
           echo "✅ Gzip files created"
-          ls -la *.gz lib/*.gz
-
-      - name: Create release package
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          echo "📦 Creating HACS release package..."
-          mkdir -p release
-
-          # 复制所有必需文件
-          cp ha-reachy-mini-card.js release/
-          cp ha-reachy-mini-card.js.gz release/
-          cp ha-reachy-mini-card.js.map release/
-          cp -r assets release/
-          cp -r lib release/
-          cp README.md release/
-          cp hacs.json release/
-
-          # 创建 zip 包
-          cd release
-          zip -r ../ha-reachy-mini-card.zip .
-          cd ..
-
-          echo "✅ Release package created"
-          unzip -l ha-reachy-mini-card.zip | head -50
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ha-reachy-mini-card
-          path: |
-            ha-reachy-mini-card.js
-            ha-reachy-mini-card.js.gz
-            ha-reachy-mini-card.js.map
-            assets/
-            lib/
+          path: dist/
           retention-days: 30
 
-      - name: Commit built files to repository
+      - name: Commit dist to repository
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add ha-reachy-mini-card.js ha-reachy-mini-card.js.gz lib/ hacs.json
-          git diff --staged --quiet || git commit -m "chore: build [skip ci]"
+          git add dist/ hacs.json
+          git diff --staged --quiet || git commit -m "chore: build dist [skip ci]"
           git push
 
       - name: Create Release
@@ -148,43 +117,22 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ha-reachy-mini-card.zip
-            ha-reachy-mini-card.js
-            ha-reachy-mini-card.js.map
+            dist/ha-reachy-mini-card.js
+            dist/ha-reachy-mini-card.js.map
           body: |
             # 🎉 Reachy Mini 3D Card ${{ github.ref_name }}
 
-            ## 🚀 Major Update - V3.0.0: Unified Naming Convention!
+            ## 📦 Installation via HACS
 
-            This version unifies all names to `ha-reachy-mini-card` for better consistency.
-
-            ✨ **Changes:**
-            - 🔧 Rename card type from `custom:reachy-mini-3d-card` to `custom:ha-reachy-mini-card`
-            - 📝 Unify all names to `ha-reachy-mini-card`
-            - 🔄 Update all documentation and examples
-
-            ## 📦 Installation
-
-            ### Via HACS (Recommended)
             1. Open HACS in Home Assistant
             2. Go to **Frontend** → **Custom repositories**
             3. Add: `https://github.com/Desmond-Dong/ha-reachy-mini-card`
-            4. Search for "Reachy Mini 3D Card" and click **Download**
-            5. Add to your Lovelace dashboard
-
-            ### Manual Installation
-            1. Download `ha-reachy-mini-card.zip`
-            2. Extract to `/config/www/community/ha-reachy-mini-card/`
-            3. Add to resources:
-            ```yaml
-            resources:
-              - url: /community/ha-reachy-mini-card/ha-reachy-mini-card.js
-                type: module
-            ```
+            4. Category: **Plugin**
+            5. Search for "Reachy Mini 3D Card" and click **Download**
+            6. Refresh browser (Ctrl+Shift+R)
 
             ## ⚙️ Configuration
 
-            ### Quick Start (USB Mode)
             ```yaml
             type: custom:ha-reachy-mini-card
             daemon_host: localhost
@@ -192,87 +140,7 @@ jobs:
             height: 400
             ```
 
-            ### WiFi Mode (Remote Reachy Mini)
-            ```yaml
-            type: custom:ha-reachy-mini-card
-            daemon_host: 192.168.1.100  # Your Reachy Mini IP
-            daemon_port: 8000
-            height: 400
-            ```
-
-            ### All Options
-            - `daemon_host` - Daemon hostname/IP (default: `localhost`)
-            - `daemon_port` - Daemon port (default: `8000`)
-            - `height` - Card height in pixels (default: `400`)
-            - `enable_passive_joints` - Enable passive joints (default: `true`)
-            - `enable_head_pose` - Enable head pose matrix (default: `true`)
-            - `background_color` - Background color (default: `#f5f5f5`)
-            - `enable_grid` - Show grid (default: `true`)
-            - `camera_distance` - Camera distance (default: `0.5`)
-
-            ## 🔄 Migration from V2
-
-            If you're upgrading from V2:
-
-            1. **Update configuration** - Change card type:
-            ```yaml
-            # Old V2 config
-            type: custom:reachy-mini-3d-card
-
-            # New V3 config
-            type: custom:ha-reachy-mini-card
-            ```
-
-            2. **Refresh browser** - Press Ctrl+Shift+R to clear cache
-
-            See [CHANGELOG.md](https://github.com/Desmond-Dong/ha-reachy-mini-card/blob/main/CHANGELOG.md) for full history.
-
-            ## 📊 What's Changed
-
-            ### 🆕 V3.0.0 (Current)
-            - 🔧 Unified naming convention to `ha-reachy-mini-card`
-            - 📝 Updated all documentation and examples
-            - 🔄 Improved consistency across all files
-
-            ### 🆕 V2.0.0
-            - ✨ Direct WebSocket connection to daemon
-            - ⚡ 10x latency improvement (500ms → 50ms)
-            - 🟢 Real-time connection status
-            - 🔄 Auto-reconnection with exponential backoff
-            - 🚫 No ESPHome dependency
-            - 📖 Complete documentation overhaul
-
-            See [CHANGELOG.md](https://github.com/Desmond-Dong/ha-reachy-mini-card/blob/main/CHANGELOG.md) for full history.
-
-            ## 🐛 Troubleshooting
-
-            ### "Card not found" error
-            1. Refresh browser (Ctrl+Shift+R)
-            2. Clear HACS cache
-            3. Check browser console (F12) for errors
-
-            ### "Connection Failed" error
-            1. Check if Reachy Mini daemon is running:
-               ```bash
-               curl http://localhost:8000/api/state/full
-               ```
-            2. Verify firewall allows port 8000
-            3. Check browser console (F12) for detailed errors
-
-            ### Robot not moving
-            - Verify connection status (green indicator = connected)
-            - Check daemon is publishing data
-            - Try refreshing browser (Ctrl+Shift+R)
-
-            See [README.md](https://github.com/Desmond-Dong/ha-reachy-mini-card/blob/main/README.md) for more details.
-
-            ## 📚 Documentation
-
-            Full documentation available in the [README.md](https://github.com/Desmond-Dong/ha-reachy-mini-card/blob/main/README.md)
-
-            ## 🙏 Credits
-
-            Built with reference to [reachy-mini-desktop-app](https://github.com/pollen-robotics/reachy-mini-desktop-app)
+            See [README.md](https://github.com/Desmond-Dong/ha-reachy-mini-card/blob/main/README.md) for full documentation.
           draft: false
           prerelease: false
         env:
