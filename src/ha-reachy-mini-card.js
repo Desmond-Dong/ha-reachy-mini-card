@@ -667,7 +667,7 @@
     }
 
     getBasePath() {
-      return '/hacsfiles/ha-reachy-mini-card/dist/';
+      return '/hacsfiles/ha-reachy-mini-card/';
     }
 
 disconnectedCallback() {
