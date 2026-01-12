@@ -1,6 +1,5 @@
 import * as THREE from './three.core.js';
 import { STLLoader } from './STLLoader.js';
-import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js';
 import { URDFRobot, URDFJoint, URDFLink, URDFCollider, URDFVisual, URDFMimicJoint } from './URDFClasses.js';
 
 /*
@@ -14,12 +13,14 @@ THREE.js
    |
    |
    .-----X
- Ôº?Z
+ Ôºè
+Z
 
 ROS URDf
        Z
        |   X
-       | Ôº? Y-----.
+       | Ôºè
+ Y-----.
 
 */
 
