@@ -86,6 +86,9 @@ jobs:
         run: |
           echo "🗜️ Creating gzip compressed files..."
           
+          # Remove existing gz files first
+          rm -f dist/*.gz dist/lib/*.gz
+          
           gzip -k -9 dist/ha-reachy-mini-card.js
           gzip -k -9 dist/lib/three.core.js
           gzip -k -9 dist/lib/OrbitControls.js
