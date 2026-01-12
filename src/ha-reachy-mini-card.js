@@ -387,11 +387,11 @@
         return;
       }
 
-      console.log('📦 Loading Three.js from lib/three.core.js...');
+      console.log('📦 Loading Three.js from lib/three.module.js...');
       
       try {
         // Use dynamic import to load Three.js as a module
-        const threeModule = await import(`${basePath}lib/three.core.js`);
+        const threeModule = await import(`${basePath}lib/three.module.js`);
         
         // Create global THREE object with all exports
         window.THREE = threeModule;

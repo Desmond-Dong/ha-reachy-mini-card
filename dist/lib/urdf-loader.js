@@ -1,4 +1,4 @@
-import * as THREE from './three.core.js';
+import * as THREE from './three.module.js';
 import { STLLoader } from './STLLoader.js';
 import { URDFRobot, URDFJoint, URDFLink, URDFCollider, URDFVisual, URDFMimicJoint } from './URDFClasses.js';
 
@@ -13,13 +13,13 @@ THREE.js
    |
    |
    .-----X
- Ôºè
+ Ôº?
 Z
 
 ROS URDf
        Z
        |   X
-       | Ôºè
+       | Ôº?
  Y-----.
 
 */

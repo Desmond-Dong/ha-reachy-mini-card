@@ -1,4 +1,4 @@
-import { Raycaster, Vector3, Plane, Vector2 } from './three.core.js';
+import { Raycaster, Vector3, Plane, Vector2 } from './three.module.js';
 
 // Find the nearest parent that is a joint
 function isJoint(j) {

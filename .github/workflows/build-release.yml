@@ -61,16 +61,16 @@ jobs:
           cp node_modules/urdf-loader/src/URDFLoader.js dist/lib/urdf-loader.js
           
           # Copy Three.js files
-          cp node_modules/three/build/three.core.js dist/lib/three.core.js
+          cp node_modules/three/build/three.module.js dist/lib/three.module.js
           cp node_modules/three/examples/jsm/controls/OrbitControls.js dist/lib/OrbitControls.js
           cp node_modules/three/examples/jsm/loaders/STLLoader.js dist/lib/STLLoader.js
           
           # Fix import statements to use relative paths
-          sed -i "s/from 'three'/from '.\/three.core.js'/g" dist/lib/OrbitControls.js
-          sed -i "s/from 'three'/from '.\/three.core.js'/g" dist/lib/URDFClasses.js
-          sed -i "s/from 'three'/from '.\/three.core.js'/g" dist/lib/URDFDragControls.js
-          sed -i "s/from 'three'/from '.\/three.core.js'/g" dist/lib/STLLoader.js
-          sed -i "s/from 'three'/from '.\/three.core.js'/g" dist/lib/urdf-loader.js
+          sed -i "s/from 'three'/from '.\/three.module.js'/g" dist/lib/OrbitControls.js
+          sed -i "s/from 'three'/from '.\/three.module.js'/g" dist/lib/URDFClasses.js
+          sed -i "s/from 'three'/from '.\/three.module.js'/g" dist/lib/URDFDragControls.js
+          sed -i "s/from 'three'/from '.\/three.module.js'/g" dist/lib/STLLoader.js
+          sed -i "s/from 'three'/from '.\/three.module.js'/g" dist/lib/urdf-loader.js
           sed -i "s|from 'three/examples/jsm/loaders/STLLoader.js'|from './STLLoader.js'|g" dist/lib/urdf-loader.js
           
           # Remove ColladaLoader import (not used)
@@ -90,7 +90,7 @@ jobs:
           rm -f dist/*.gz dist/lib/*.gz
           
           gzip -k -9 dist/ha-reachy-mini-card.js
-          gzip -k -9 dist/lib/three.core.js
+          gzip -k -9 dist/lib/three.module.js
           gzip -k -9 dist/lib/OrbitControls.js
           gzip -k -9 dist/lib/urdf-loader.js
           gzip -k -9 dist/lib/URDFClasses.js
