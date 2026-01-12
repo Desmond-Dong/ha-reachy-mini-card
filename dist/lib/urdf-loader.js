@@ -13,13 +13,13 @@ THREE.js
    |
    |
    .-----X
- ï¼
+ ï¼?
 Z
 
 ROS URDf
        Z
        |   X
-       | ï¼
+       | ï¼?
  Y-----.
 
 */
@@ -641,9 +641,6 @@ class URDFLoader {
             });
 
         } else if (/\.dae$/i.test(path)) {
-
-            const loader = new ColladaLoader(manager);
-            loader.load(path, dae => done(dae.scene));
 
         } else {
 
