@@ -2,11 +2,8 @@ name: Build and Release Reachy Mini 3D Card
 
 on:
   push:
-    branches: [ main ]
     tags:
       - 'v*'
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -29,99 +26,50 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run linter
-        run: npm run lint --if-present
-        continue-on-error: true
-
       - name: Build bundle
         run: |
           echo "Building Reachy Mini 3D Card..."
           npm run build
           echo "Build completed successfully"
 
-      - name: Create dist directory structure
+      - name: Prepare release files
         run: |
-          echo "📦 Creating dist directory for HACS..."
+          echo "📦 Preparing release files..."
           
-          # Create dist directory
-          mkdir -p dist/lib
-          mkdir -p dist/assets/meshes
+          # Create release directory
+          mkdir -p release/lib
+          mkdir -p release/assets/meshes
           
           # Copy main JS file
-          cp ha-reachy-mini-card.js dist/
-          cp ha-reachy-mini-card.js.map dist/ 2>/dev/null || true
+          cp ha-reachy-mini-card.js release/
+          cp ha-reachy-mini-card.js.map release/ 2>/dev/null || true
           
           # Copy URDF and meshes
-          cp assets/reachy-mini.urdf dist/assets/
-          cp assets/meshes/*.stl dist/assets/meshes/
+          cp assets/reachy-mini.urdf release/assets/
+          cp assets/meshes/*.stl release/assets/meshes/
           
-          # Copy URDFLoader files from node_modules
-          cp node_modules/urdf-loader/src/URDFClasses.js dist/lib/URDFClasses.js
-          cp node_modules/urdf-loader/src/URDFDragControls.js dist/lib/URDFDragControls.js
-          cp node_modules/urdf-loader/src/URDFLoader.js dist/lib/urdf-loader.js
+          # Copy lib files from local lib directory (already fixed)
+          cp lib/*.js release/lib/
           
-          # Copy Three.js files
-          cp node_modules/three/build/three.module.js dist/lib/three.module.js
-          cp node_modules/three/examples/jsm/controls/OrbitControls.js dist/lib/OrbitControls.js
-          cp node_modules/three/examples/jsm/loaders/STLLoader.js dist/lib/STLLoader.js
-          
-          # Fix import statements to use relative paths
-          sed -i "s/from 'three'/from '.\/three.module.js'/g" dist/lib/OrbitControls.js
-          sed -i "s/from 'three'/from '.\/three.module.js'/g" dist/lib/URDFClasses.js
-          sed -i "s/from 'three'/from '.\/three.module.js'/g" dist/lib/URDFDragControls.js
-          sed -i "s/from 'three'/from '.\/three.module.js'/g" dist/lib/STLLoader.js
-          sed -i "s/from 'three'/from '.\/three.module.js'/g" dist/lib/urdf-loader.js
-          sed -i "s|from 'three/examples/jsm/loaders/STLLoader.js'|from './STLLoader.js'|g" dist/lib/urdf-loader.js
-          
-          # Remove ColladaLoader import (not used)
-          sed -i "/import.*ColladaLoader/d" dist/lib/urdf-loader.js
-          
-          echo "✅ dist directory created"
+          echo "✅ Release files prepared"
           echo "📁 Directory structure:"
-          find dist -type f | head -20
-          echo "..."
-          echo "Total files: $(find dist -type f | wc -l)"
+          find release -type f
+          echo "Total files: $(find release -type f | wc -l)"
 
-      - name: Create gzip files
+      - name: Create zip for HACS
         run: |
-          echo "🗜️ Creating gzip compressed files..."
-          
-          # Remove existing gz files first
-          rm -f dist/*.gz dist/lib/*.gz
-          
-          gzip -k -9 dist/ha-reachy-mini-card.js
-          gzip -k -9 dist/lib/three.module.js
-          gzip -k -9 dist/lib/OrbitControls.js
-          gzip -k -9 dist/lib/urdf-loader.js
-          gzip -k -9 dist/lib/URDFClasses.js
-          gzip -k -9 dist/lib/URDFDragControls.js
-          gzip -k -9 dist/lib/STLLoader.js
-          
-          echo "✅ Gzip files created"
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ha-reachy-mini-card
-          path: dist/
-          retention-days: 30
-
-      - name: Commit dist to repository
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add dist/ hacs.json
-          git diff --staged --quiet || git commit -m "chore: build dist [skip ci]"
-          git push
+          echo "🗜️ Creating zip file for HACS..."
+          cd release
+          zip -r ../ha-reachy-mini-card.zip .
+          cd ..
+          echo "✅ Zip file created"
+          ls -la ha-reachy-mini-card.zip
 
       - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            dist/ha-reachy-mini-card.js
-            dist/ha-reachy-mini-card.js.map
+            ha-reachy-mini-card.zip
           body: |
             # 🎉 Reachy Mini 3D Card ${{ github.ref_name }}
 
