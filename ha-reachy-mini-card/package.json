@@ -1,0 +1,49 @@
+{
+  "name": "ha-reachy-mini-card",
+  "version": "1.0.0",
+  "description": "Home Assistant custom card for Reachy Mini 3D visualization",
+  "main": "dist/ha-reachy-mini-card.js",
+  "scripts": {
+    "build": "rollup -c",
+    "build:dev": "rollup -c --environment BUILD:development",
+    "watch": "rollup -c -w",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "clean": "node -e \"const fs=require('fs');const p='dist/ha-reachy-mini-card.js';if(fs.existsSync(p))fs.unlinkSync(p);console.log('Cleaned dist/ha-reachy-mini-card.js');\""
+  },
+  "keywords": [
+    "home-assistant",
+    "lovelace",
+    "reachy-mini",
+    "3d",
+    "robot",
+    "hacs",
+    "custom-card"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bugs": {
+    "url": ""
+  },
+  "homepage": "",
+  "dependencies": {
+    "three": "^0.181.0",
+    "urdf-loader": "^0.12.6"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "fast-check": "^3.23.2",
+    "jsdom": "^26.1.0",
+    "rollup": "^4.55.1",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

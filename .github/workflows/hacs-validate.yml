@@ -3,14 +3,19 @@ name: HACS Validation
 on:
   push:
     branches: [main]
+    paths:
+      - 'ha-reachy-mini-card/**'
+      - 'hacs.json'
   pull_request:
     branches: [main]
-  schedule:
-    - cron: "0 0 * * *"
+    paths:
+      - 'ha-reachy-mini-card/**'
+      - 'hacs.json'
   workflow_dispatch:
 
 jobs:
   validate-hacs:
+    name: Validate HACS
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,4 +23,27 @@ jobs:
       - name: HACS Validation
         uses: hacs/action@main
         with:
-          category: integration
+          category: plugin
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ha-reachy-mini-card
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build check
+        run: npm run build

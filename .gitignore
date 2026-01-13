@@ -1,31 +1,25 @@
 # Dependencies
 node_modules/
 
-# Build output
-# Source maps in root are ignored, but keep in custom_components
-/ha-reachy-mini-card.js.map
-
-# Reference project
-reachy-mini-desktop-app/
+# Build outputs (keep dist/ for distribution)
+*.log
 
 # IDE
-.vscode/
 .idea/
+.vscode/
+*.swp
+*.swo
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
-# AI tools
-.claude/
-.serena/
+# External projects (not part of this repo)
+reachy-mini-desktop-app/
 
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Test coverage
+coverage/
 
-# Root level build artifacts
-/ha-reachy-mini-card.js
-/ha-reachy-mini-card.js.gz
+# Environment files
+.env
+.env.local
