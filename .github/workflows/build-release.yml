@@ -65,11 +65,11 @@ jobs:
             
             ## Manual Installation
             1. Download `ha-reachy-mini-card.js` and the `assets/` folder from this release
-            2. Copy to `config/www/ha-reachy-mini-card/`
+            2. Copy to `config/www/ha-reachy-mini/`
             3. Add resource in Lovelace configuration:
                ```yaml
                resources:
-                 - url: /local/ha-reachy-mini-card/ha-reachy-mini-card.js
+                 - url: /local/ha-reachy-mini/ha-reachy-mini-card.js
                    type: module
                ```
             

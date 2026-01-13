@@ -39,9 +39,9 @@ A custom Lovelace card that provides real-time 3D visualization of the Reachy Mi
 ### Manual Installation
 
 1. Download `ha-reachy-mini-card.js` from the [latest release](../../releases/latest)
-2. Copy the `dist/` folder contents to your `config/www/ha-reachy-mini-card/` folder:
+2. Copy the `dist/` folder contents to your `config/www/ha-reachy-mini/` folder:
    ```
-   config/www/ha-reachy-mini-card/
+   config/www/ha-reachy-mini/
    ├── ha-reachy-mini-card.js
    ├── assets/
    │   └── robot-3d/
@@ -56,7 +56,7 @@ A custom Lovelace card that provides real-time 3D visualization of the Reachy Mi
 
 ```yaml
 resources:
-  - url: /local/ha-reachy-mini-card/ha-reachy-mini-card.js
+  - url: /local/ha-reachy-mini/ha-reachy-mini-card.js
     type: module
 ```
 
@@ -148,7 +148,7 @@ The card displays a status indicator at the bottom-left corner:
 ### Setup
 
 ```bash
-cd ha-reachy-mini-card
+cd ha-reachy-mini
 npm install
 ```
 

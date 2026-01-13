@@ -55,11 +55,11 @@ const ROBOT_JOINTS = {
  */
 const ASSET_PATHS = {
   // Base path for assets (relative to the card's location)
-  BASE: '/local/ha-reachy-mini-card/assets',
+  BASE: '/local/ha-reachy-mini/assets',
   // URDF file path
-  URDF: '/local/ha-reachy-mini-card/assets/robot-3d/reachy-mini.urdf',
+  URDF: '/local/ha-reachy-mini/assets/robot-3d/reachy-mini.urdf',
   // Meshes directory
-  MESHES: '/local/ha-reachy-mini-card/assets/robot-3d/meshes'
+  MESHES: '/local/ha-reachy-mini/assets/robot-3d/meshes'
 };
 
 /**
