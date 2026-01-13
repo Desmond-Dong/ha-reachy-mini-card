@@ -5,18 +5,16 @@
 
 A custom Lovelace card that provides real-time 3D visualization of the Reachy Mini robot. The card connects directly to the Reachy Mini daemon via WebSocket to display the robot's current state (head pose, antenna positions, body rotation) in an interactive 3D view.
 
-![Reachy Mini 3D Card Preview](https://via.placeholder.com/600x400?text=Reachy+Mini+3D+Card)
-
 ## Features
 
 - Real-time 3D visualization of Reachy Mini robot at 20Hz
-- Interactive camera controls (rotate, zoom, pan)
-- WebSocket connection to Reachy Mini daemon with auto-reconnection
+- WebSocket connection with HTTP polling fallback
+- Interactive camera controls (rotate, zoom)
 - Connection status indicator (connected/reconnecting/offline)
+- Local kinematics calculation for passive joints
+- Visual configuration editor
 - Configurable appearance and behavior
-- Stewart platform passive joint visualization
-- No external dependencies at runtime (all assets bundled locally)
-- HACS compatible for easy installation and updates
+- HACS compatible for easy installation
 
 ## Requirements
 
@@ -31,32 +29,31 @@ A custom Lovelace card that provides real-time 3D visualization of the Reachy Mi
 1. Open HACS in your Home Assistant instance
 2. Go to "Frontend" section
 3. Click the three dots menu (⋮) and select "Custom repositories"
-4. Add this repository URL and select "Lovelace" as the category
-5. Search for "Reachy Mini 3D Card" and click "Install"
-6. Restart Home Assistant
-7. Clear your browser cache
+4. Add this repository URL: `https://github.com/Desmond-Dong/ha-reachy-mini`
+5. Select "Lovelace" as the category
+6. Search for "Reachy Mini 3D Card" and click "Install"
+7. Restart Home Assistant
+8. Clear your browser cache
 
 ### Manual Installation
 
-1. Download `ha-reachy-mini-card.js` from the [latest release](../../releases/latest)
-2. Copy the `dist/` folder contents to your `config/www/ha-reachy-mini/` folder:
+1. Download the `dist/` folder from this repository
+2. Copy to `config/www/community/ha-reachy-mini/`:
    ```
-   config/www/ha-reachy-mini/
-   ├── ha-reachy-mini-card.js
-   ├── assets/
-   │   └── robot-3d/
-   │       ├── reachy-mini.urdf
-   │       └── meshes/
-   └── lib/
-       ├── three.min.js
-       ├── OrbitControls.js
-       └── urdf-loader.js
+   config/www/community/ha-reachy-mini/
+   └── dist/
+       ├── ha-reachy-mini-card.js
+       └── assets/
+           └── robot-3d/
+               ├── reachy-mini.urdf
+               └── meshes/
+                   └── *.stl
    ```
 3. Add the resource in your Lovelace configuration:
 
 ```yaml
 resources:
-  - url: /local/ha-reachy-mini/ha-reachy-mini-card.js
+  - url: /hacsfiles/ha-reachy-mini/dist/ha-reachy-mini-card.js
     type: module
 ```
 
@@ -84,7 +81,6 @@ height: 400
 background_color: "#f5f5f5"
 camera_distance: 0.5
 enable_passive_joints: true
-enable_head_pose: true
 enable_grid: true
 ```
 
@@ -93,119 +89,55 @@ enable_grid: true
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `daemon_host` | string | `localhost` | Hostname or IP address of the Reachy Mini daemon |
-| `daemon_port` | number | `8000` | Port of the Reachy Mini daemon WebSocket API |
+| `daemon_port` | number | `8000` | Port of the Reachy Mini daemon |
 | `height` | number | `400` | Card height in pixels |
-| `background_color` | string | `#f5f5f5` | Background color of the 3D view (hex or CSS color) |
-| `camera_distance` | number | `0.5` | Initial camera distance from robot (range: 0.2-1.5) |
-| `enable_passive_joints` | boolean | `true` | Show Stewart platform passive joints for accurate visualization |
-| `enable_head_pose` | boolean | `true` | Use head pose matrix for head positioning |
-| `enable_grid` | boolean | `true` | Show floor grid for spatial reference |
+| `background_color` | string | `#f5f5f5` | Background color of the 3D view |
+| `camera_distance` | number | `0.5` | Initial camera distance (0.2-1.5) |
+| `enable_passive_joints` | boolean | `true` | Show Stewart platform passive joints |
+| `enable_grid` | boolean | `true` | Show floor grid |
 
 ## Connection Status
 
-The card displays a status indicator at the bottom-left corner:
-
 | Status | Color | Description |
 |--------|-------|-------------|
-| Connected | 🟢 Green | Successfully connected to daemon, receiving data |
+| Connected | 🟢 Green | Successfully connected, receiving data |
 | Reconnecting | 🟠 Orange | Connection lost, attempting to reconnect |
 | Offline | 🔴 Red | Unable to connect after multiple attempts |
+
+## API
+
+The card connects to the Reachy Mini daemon:
+
+**Primary (WebSocket):**
+```
+ws://{host}:{port}/api/state/ws/full?frequency=20&with_head_pose=true&use_pose_matrix=true&with_head_joints=true&with_antenna_positions=true&with_passive_joints=true
+```
+
+**Fallback (HTTP polling):**
+```
+http://{host}:{port}/api/state/full?with_control_mode=true&with_head_joints=true&with_body_yaw=true&with_antenna_positions=true
+```
 
 ## Troubleshooting
 
 ### Card not showing
-
-1. Ensure the resource is properly added to your Lovelace configuration
-2. Clear your browser cache (Ctrl+Shift+R or Cmd+Shift+R)
-3. Check the browser console for errors (F12 → Console)
+- Clear browser cache (Ctrl+Shift+R)
+- Check browser console for errors (F12)
 
 ### Connection issues
-
-1. Verify the Reachy Mini daemon is running: `curl http://<daemon_host>:<daemon_port>/api/state`
-2. Ensure the daemon is accessible from your Home Assistant network
-3. Check firewall settings allow WebSocket connections on the configured port
-4. Verify the `daemon_host` is correct (use IP address if hostname doesn't resolve)
+- Verify daemon is running: `curl http://<host>:<port>/api/state/full`
+- Check firewall settings
 
 ### 3D model not loading
-
-1. Ensure all asset files are present in the correct directories
-2. Check browser console for 404 errors on asset files
-3. Verify file permissions allow Home Assistant to serve the files
-
-### Performance issues
-
-1. Reduce `height` to decrease rendering resolution
-2. Set `enable_passive_joints: false` to reduce joint calculations
-3. Ensure your device supports WebGL (check at [get.webgl.org](https://get.webgl.org))
-
-## Development
-
-### Prerequisites
-
-- Node.js >= 18
-- npm
-
-### Setup
-
-```bash
-cd ha-reachy-mini
-npm install
-```
-
-### Build
-
-```bash
-# Production build (minified)
-npm run build
-
-# Development build (unminified, with source maps)
-npm run build:dev
-```
-
-### Watch mode
-
-```bash
-npm run watch
-```
-
-### Testing
-
-```bash
-# Run tests once
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-```
-
-## WebSocket API
-
-The card connects to the Reachy Mini daemon WebSocket endpoint:
-
-```
-ws://{daemon_host}:{daemon_port}/api/state/ws/full?frequency=20&with_head_joints=true&with_antenna_positions=true&with_passive_joints=true
-```
-
-### Expected Data Format
-
-```json
-{
-  "head_joints": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-  "antennas_position": [0.0, 0.0],
-  "passive_joints": [0.0, 0.0, ...]
-}
-```
+- Check browser console for 404 errors
+- Ensure `dist/assets/` folder is present
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+MIT License
 
 ## Credits
 
-- [Three.js](https://threejs.org/) - 3D rendering library
-- [urdf-loader](https://github.com/gkjohnson/urdf-loaders) - URDF model loading
-- [Pollen Robotics](https://www.pollen-robotics.com/) - Reachy Mini robot
+- [Three.js](https://threejs.org/)
+- [urdf-loader](https://github.com/gkjohnson/urdf-loaders)
+- [Pollen Robotics](https://www.pollen-robotics.com/)
