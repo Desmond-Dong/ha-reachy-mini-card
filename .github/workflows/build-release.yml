@@ -36,10 +36,8 @@ jobs:
       - name: Build bundle
         run: npm run build
 
-      - name: Copy built files
-        run: |
-          cp dist/ha-reachy-mini-card.js ../dist/
-          cp dist/ha-reachy-mini-card.js ../ha-reachy-mini-card.js
+      - name: Copy built file to root dist
+        run: cp dist/ha-reachy-mini-card.js ../dist/
 
       - name: Commit built JS file
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -47,7 +45,7 @@ jobs:
           cd ..
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add dist/ha-reachy-mini-card.js ha-reachy-mini-card.js
+          git add dist/ha-reachy-mini-card.js
           git diff --staged --quiet || git commit -m "chore: build JS bundle [skip ci]"
           git push
 
@@ -58,9 +56,7 @@ jobs:
           body: |
             # Reachy Mini 3D Card ${{ github.ref_name }}
             
-            A real-time 3D visualization card for Reachy Mini robot in Home Assistant.
-            
-            ## Installation via HACS (Recommended)
+            ## Installation via HACS
             1. Open HACS → Frontend → Custom repositories
             2. Add: `https://github.com/Desmond-Dong/ha-reachy-mini`
             3. Category: **Lovelace**
@@ -68,17 +64,17 @@ jobs:
             5. Clear browser cache and restart Home Assistant
             
             ## Manual Installation
-            1. Download the entire folder from this repository
-            2. Copy to `config/www/community/ha-reachy-mini/dist/`
+            1. Download `ha-reachy-mini-card.js` and the `assets/` folder from this release
+            2. Copy to `config/www/ha-reachy-mini/`
             3. Add resource in Lovelace configuration:
                ```yaml
                resources:
-                 - url: /hacsfiles/ha-reachy-mini/ha-reachy-mini-card.js
+                 - url: /local/ha-reachy-mini/ha-reachy-mini-card.js
                    type: module
                ```
             
             ## Usage
-            Add the card to your dashboard (supports visual editor):
+            Add the card to your dashboard:
             ```yaml
             type: custom:ha-reachy-mini-card
             daemon_host: your-reachy-mini-ip
@@ -89,22 +85,15 @@ jobs:
             | Option | Default | Description |
             |--------|---------|-------------|
             | `daemon_host` | `localhost` | Reachy Mini daemon IP/hostname |
-            | `daemon_port` | `8000` | Daemon port |
+            | `daemon_port` | `8000` | Daemon WebSocket port |
             | `height` | `400` | Card height in pixels |
             | `background_color` | `#f5f5f5` | Background color |
             | `camera_distance` | `0.5` | Camera distance (0.2-1.5) |
-            | `enable_passive_joints` | `true` | Show Stewart platform passive joints |
+            | `enable_passive_joints` | `true` | Show Stewart platform joints |
             | `enable_grid` | `true` | Show floor grid |
-            
-            ## Features
-            - Real-time 3D robot visualization via WebSocket (20Hz)
-            - HTTP polling fallback when WebSocket unavailable
-            - Local kinematics calculation for passive joints
-            - Visual configuration editor
-            - Orbit controls for camera rotation/zoom
           draft: false
           prerelease: false
           files: |
-            ha-reachy-mini-card.js
+            dist/ha-reachy-mini-card.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
