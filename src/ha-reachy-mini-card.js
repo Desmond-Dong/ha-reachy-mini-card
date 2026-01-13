@@ -225,8 +225,10 @@
     }
   }
 
-  // 注册编辑器
-  customElements.define('ha-reachy-mini-card-editor', ReachyMini3DCardEditor);
+  // 注册编辑器（防止重复注册）
+  if (!customElements.get('ha-reachy-mini-card-editor')) {
+    customElements.define('ha-reachy-mini-card-editor', ReachyMini3DCardEditor);
+  }
 
   // 主卡片组件
   class ReachyMini3DCard extends HTMLElement {
@@ -685,8 +687,10 @@ disconnectedCallback() {
     }
   }
 
-  // 注册主卡片
-  customElements.define('ha-reachy-mini-card', ReachyMini3DCard);
+  // 注册主卡片（防止重复注册）
+  if (!customElements.get('ha-reachy-mini-card')) {
+    customElements.define('ha-reachy-mini-card', ReachyMini3DCard);
+  }
 
   // 注册到 window.customCards 以便在卡片选择器中显示
   window.customCards = window.customCards || [];

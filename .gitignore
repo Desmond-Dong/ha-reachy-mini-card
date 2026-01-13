@@ -1,10 +1,9 @@
 # Dependencies
 node_modules/
 
-# Build output (keep dist/ for HACS)
-# dist/ is NOT ignored - HACS needs it
-*.js.map
-!dist/*.js.map
+# Build output
+# Source maps in root are ignored, but keep in custom_components
+/ha-reachy-mini-card.js.map
 
 # Reference project
 reachy-mini-desktop-app/
@@ -27,7 +26,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Root level build artifacts (use dist/ instead)
+# Root level build artifacts
 /ha-reachy-mini-card.js
 /ha-reachy-mini-card.js.gz
-/ha-reachy-mini-card.js.map
