@@ -37,7 +37,7 @@ jobs:
         run: npm run build
 
       - name: Copy built file to root dist
-        run: cp dist/ha-reachy-mini-card.js ../dist/
+        run: cp dist/ha-reachy-mini-card.js ../
 
       - name: Commit built JS file
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -66,12 +66,12 @@ jobs:
             5. Clear browser cache and restart Home Assistant
             
             ## Manual Installation
-            1. Download the entire `dist/` folder from this repository
+            1. Download the entire folder from this repository
             2. Copy to `config/www/community/ha-reachy-mini/dist/`
             3. Add resource in Lovelace configuration:
                ```yaml
                resources:
-                 - url: /hacsfiles/ha-reachy-mini/dist/ha-reachy-mini-card.js
+                 - url: /hacsfiles/ha-reachy-mini/ha-reachy-mini-card.js
                    type: module
                ```
             
@@ -103,6 +103,6 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            dist/ha-reachy-mini-card.js
+            ha-reachy-mini-card.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
