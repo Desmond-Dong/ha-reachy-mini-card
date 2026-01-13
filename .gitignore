@@ -9,6 +9,8 @@ node_modules/
 .vscode/
 *.swp
 *.swo
+.kiro/
+.kiro/*
 
 # OS files
 .DS_Store
