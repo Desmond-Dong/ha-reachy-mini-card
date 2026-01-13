@@ -122,6 +122,475 @@ const SCENE_CONFIG = {
   }
 };
 
+/**
+ * Kinematics constants for passive joint calculation
+ * Ported from Rust WASM module (kinematics-wasm/src/lib.rs)
+ */
+const KINEMATICS_CONFIG = {
+  // Head Z offset (from kinematics_data.json)
+  HEAD_Z_OFFSET: 0.177,
+  // Motor arm length (from kinematics_data.json)
+  MOTOR_ARM_LENGTH: 0.04,
+  // XL330 frame pose in head frame (from URDF)
+  T_HEAD_XL_330: [
+    [0.4822, -0.7068, -0.5177, 0.0206],
+    [0.1766, -0.5003, 0.8476, -0.0218],
+    [-0.8581, -0.5001, -0.1164, 0.0],
+    [0.0, 0.0, 0.0, 1.0]
+  ],
+  // Passive joint orientation offsets (from URDF)
+  PASSIVE_ORIENTATION_OFFSET: [
+    [-0.13754, -0.0882156, 2.10349],
+    [-Math.PI, 5.37396e-16, -Math.PI],
+    [0.373569, 0.0882156, -1.0381],
+    [-0.0860846, 0.0882156, 1.0381],
+    [0.123977, 0.0882156, -1.0381],
+    [3.0613, 0.0882156, 1.0381],
+    [Math.PI, 2.10388e-17, 4.15523e-17]
+  ],
+  // Stewart rod direction in passive frame (from URDF)
+  STEWART_ROD_DIR_IN_PASSIVE_FRAME: [
+    [1.0, 0.0, 0.0],
+    [0.50606941, -0.85796418, -0.08826792],
+    [-1.0, 0.0, 0.0],
+    [-1.0, 0.0, 0.0],
+    [-1.0, 0.0, 0.0],
+    [-1.0, 0.0, 0.0]
+  ],
+  // Motor data from kinematics_data.json
+  MOTORS: [
+    // stewart_1
+    {
+      branchPosition: [0.020648178337122566, 0.021763723638894568, 1.0345743467476964e-07],
+      tWorldMotor: [
+        [0.8660247915798899, 0.0000044901959360, -0.5000010603477224, 0.0269905781109381],
+        [-0.5000010603626028, 0.0000031810770988, -0.8660247915770969, 0.0267489144601032],
+        [-0.0000022980790772, 0.9999999999848599, 0.0000049999943606, 0.0766332540902687],
+        [0.0, 0.0, 0.0, 1.0]
+      ]
+    },
+    // stewart_2
+    {
+      branchPosition: [0.00852381571767217, 0.028763668526131346, 1.183437210727778e-07],
+      tWorldMotor: [
+        [-0.8660211183436273, -0.0000044902196459, -0.5000074225075980, 0.0096699703080478],
+        [0.5000074225224782, -0.0000031810634097, -0.8660211183408341, 0.0367490037948058],
+        [0.0000022980697230, -0.9999999999848597, 0.0000050000112432, 0.0766333000521544],
+        [0.0, 0.0, 0.0, 1.0]
+      ]
+    },
+    // stewart_3
+    {
+      branchPosition: [-0.029172011376922807, 0.0069999429399361995, 4.0290270064691214e-08],
+      tWorldMotor: [
+        [0.0000063267948970, -0.0000010196153098, 0.9999999999794665, -0.0366606982562266],
+        [0.9999999999799865, 0.0000000000135060, -0.0000063267948965, 0.0100001160862987],
+        [-0.0000000000070551, 0.9999999999994809, 0.0000010196153103, 0.0766334229944826],
+        [0.0, 0.0, 0.0, 1.0]
+      ]
+    },
+    // stewart_4
+    {
+      branchPosition: [-0.029172040355214434, -0.0069999960097160766, -3.1608172912367394e-08],
+      tWorldMotor: [
+        [-0.0000036732050704, 0.0000010196153103, 0.9999999999927344, -0.0366607717202358],
+        [-0.9999999999932538, -0.0000000000036776, -0.0000036732050700, -0.0099998653384376],
+        [-0.0000000000000677, -0.9999999999994809, 0.0000010196153103, 0.0766334229944823],
+        [0.0, 0.0, 0.0, 1.0]
+      ]
+    },
+    // stewart_5
+    {
+      branchPosition: [0.008523809101930114, -0.028763713010385224, -1.4344916837716326e-07],
+      tWorldMotor: [
+        [-0.8660284647694136, 0.0000044901728834, -0.4999946981608615, 0.0096697448698383],
+        [-0.4999946981757425, -0.0000031811099295, 0.8660284647666202, -0.0367490491228644],
+        [0.0000022980794298, 0.9999999999848597, 0.0000049999943840, 0.0766333000520353],
+        [0.0, 0.0, 0.0, 1.0]
+      ]
+    },
+    // stewart_6
+    {
+      branchPosition: [0.020648186722822436, -0.02176369606185343, -8.957920105689965e-08],
+      tWorldMotor: [
+        [0.8660247915798903, -0.0000044901962204, -0.5000010603477218, 0.0269903370664035],
+        [0.5000010603626028, 0.0000031810964559, 0.8660247915770964, -0.0267491384573748],
+        [-0.0000022980696448, -0.9999999999848597, 0.0000050000112666, 0.0766332540903862],
+        [0.0, 0.0, 0.0, 1.0]
+      ]
+    }
+  ]
+};
+
+/**
+ * Convert head pose from {x, y, z, roll, pitch, yaw} to 4x4 transformation matrix
+ * @param {Object} pose - Head pose object with x, y, z, roll, pitch, yaw
+ * @returns {number[]} - 16 element array (4x4 matrix, row-major)
+ */
+export function headPoseToMatrix(pose) {
+  if (!pose || typeof pose !== 'object') {
+    return null;
+  }
+  
+  const { x = 0, y = 0, z = 0, roll = 0, pitch = 0, yaw = 0 } = pose;
+  
+  // Create rotation matrix from euler angles (XYZ extrinsic = ZYX intrinsic)
+  const cr = Math.cos(roll);
+  const sr = Math.sin(roll);
+  const cp = Math.cos(pitch);
+  const sp = Math.sin(pitch);
+  const cy = Math.cos(yaw);
+  const sy = Math.sin(yaw);
+  
+  // Rotation matrix R = Rz(yaw) * Ry(pitch) * Rx(roll)
+  const r00 = cy * cp;
+  const r01 = cy * sp * sr - sy * cr;
+  const r02 = cy * sp * cr + sy * sr;
+  const r10 = sy * cp;
+  const r11 = sy * sp * sr + cy * cr;
+  const r12 = sy * sp * cr - cy * sr;
+  const r20 = -sp;
+  const r21 = cp * sr;
+  const r22 = cp * cr;
+  
+  // Return 4x4 transformation matrix (row-major)
+  return [
+    r00, r01, r02, x,
+    r10, r11, r12, y,
+    r20, r21, r22, z,
+    0, 0, 0, 1
+  ];
+}
+
+/**
+ * Create rotation matrix from euler angles (xyz intrinsic = Z * Y * X matrix order)
+ * @param {number} x - X rotation angle
+ * @param {number} y - Y rotation angle
+ * @param {number} z - Z rotation angle
+ * @returns {number[][]} - 3x3 rotation matrix
+ */
+function rotationFromEulerXYZ(x, y, z) {
+  const cx = Math.cos(x);
+  const sx = Math.sin(x);
+  const cy = Math.cos(y);
+  const sy = Math.sin(y);
+  const cz = Math.cos(z);
+  const sz = Math.sin(z);
+  
+  return [
+    [cy * cz, cz * sx * sy - cx * sz, cx * cz * sy + sx * sz],
+    [cy * sz, cx * cz + sx * sy * sz, cx * sy * sz - cz * sx],
+    [-sy, cy * sx, cx * cy]
+  ];
+}
+
+/**
+ * Extract euler angles (XYZ order) from rotation matrix
+ * @param {number[][]} r - 3x3 rotation matrix
+ * @returns {number[]} - [x, y, z] euler angles
+ */
+function eulerFromRotationXYZ(r) {
+  const sy = r[0][2];
+  
+  if (Math.abs(sy) < 0.99999) {
+    const x = Math.atan2(-r[1][2], r[2][2]);
+    const y = Math.asin(sy);
+    const z = Math.atan2(-r[0][1], r[0][0]);
+    return [x, y, z];
+  } else {
+    // Gimbal lock
+    const x = Math.atan2(r[2][1], r[1][1]);
+    const y = sy > 0 ? Math.PI / 2 : -Math.PI / 2;
+    const z = 0;
+    return [x, y, z];
+  }
+}
+
+/**
+ * Multiply two 3x3 matrices
+ * @param {number[][]} a - First matrix
+ * @param {number[][]} b - Second matrix
+ * @returns {number[][]} - Result matrix
+ */
+function multiplyMatrix3(a, b) {
+  const result = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      for (let k = 0; k < 3; k++) {
+        result[i][j] += a[i][k] * b[k][j];
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * Transpose a 3x3 matrix
+ * @param {number[][]} m - Matrix to transpose
+ * @returns {number[][]} - Transposed matrix
+ */
+function transposeMatrix3(m) {
+  return [
+    [m[0][0], m[1][0], m[2][0]],
+    [m[0][1], m[1][1], m[2][1]],
+    [m[0][2], m[1][2], m[2][2]]
+  ];
+}
+
+/**
+ * Multiply 3x3 matrix by 3D vector
+ * @param {number[][]} m - 3x3 matrix
+ * @param {number[]} v - 3D vector
+ * @returns {number[]} - Result vector
+ */
+function multiplyMatrixVector3(m, v) {
+  return [
+    m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2],
+    m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2],
+    m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2]
+  ];
+}
+
+/**
+ * Normalize a 3D vector
+ * @param {number[]} v - Vector to normalize
+ * @returns {number[]} - Normalized vector
+ */
+function normalizeVector3(v) {
+  const len = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+  if (len < 0.00001) return [0, 0, 0];
+  return [v[0] / len, v[1] / len, v[2] / len];
+}
+
+/**
+ * Dot product of two 3D vectors
+ * @param {number[]} a - First vector
+ * @param {number[]} b - Second vector
+ * @returns {number} - Dot product
+ */
+function dotVector3(a, b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+/**
+ * Cross product of two 3D vectors
+ * @param {number[]} a - First vector
+ * @param {number[]} b - Second vector
+ * @returns {number[]} - Cross product
+ */
+function crossVector3(a, b) {
+  return [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0]
+  ];
+}
+
+/**
+ * Align vectors: find rotation that aligns 'from' to 'to'
+ * @param {number[]} from - Source vector
+ * @param {number[]} to - Target vector
+ * @returns {number[][]} - 3x3 rotation matrix
+ */
+function alignVectors(from, to) {
+  const fromN = normalizeVector3(from);
+  const toN = normalizeVector3(to);
+  const dot = dotVector3(fromN, toN);
+  
+  // If vectors are nearly parallel
+  if (dot > 0.99999) {
+    return [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+  }
+  
+  // If vectors are nearly opposite
+  if (dot < -0.99999) {
+    let perp = crossVector3([1, 0, 0], fromN);
+    if (Math.sqrt(dotVector3(perp, perp)) < 0.001) {
+      perp = crossVector3([0, 1, 0], fromN);
+    }
+    const axis = normalizeVector3(perp);
+    const k = [
+      [0, -axis[2], axis[1]],
+      [axis[2], 0, -axis[0]],
+      [-axis[1], axis[0], 0]
+    ];
+    const k2 = multiplyMatrix3(k, k);
+    return [
+      [1 + 2 * k2[0][0], 2 * k2[0][1], 2 * k2[0][2]],
+      [2 * k2[1][0], 1 + 2 * k2[1][1], 2 * k2[1][2]],
+      [2 * k2[2][0], 2 * k2[2][1], 1 + 2 * k2[2][2]]
+    ];
+  }
+  
+  // General case: Rodrigues' rotation formula
+  const cross = crossVector3(fromN, toN);
+  const s = Math.sqrt(dotVector3(cross, cross));
+  const c = dot;
+  
+  const k = [
+    [0, -cross[2], cross[1]],
+    [cross[2], 0, -cross[0]],
+    [-cross[1], cross[0], 0]
+  ];
+  const k2 = multiplyMatrix3(k, k);
+  const factor = (1 - c) / (s * s);
+  
+  return [
+    [1 + k[0][0] + k2[0][0] * factor, k[0][1] + k2[0][1] * factor, k[0][2] + k2[0][2] * factor],
+    [k[1][0] + k2[1][0] * factor, 1 + k[1][1] + k2[1][1] * factor, k[1][2] + k2[1][2] * factor],
+    [k[2][0] + k2[2][0] * factor, k[2][1] + k2[2][1] * factor, 1 + k[2][2] + k2[2][2] * factor]
+  ];
+}
+
+/**
+ * Calculate passive joint angles from head joints and head pose
+ * Ported from Rust WASM module
+ * 
+ * @param {number[]} headJoints - Array of 7 floats: [yaw_body, stewart_1, ..., stewart_6]
+ * @param {number[]} headPoseMatrix - 4x4 transformation matrix as 16 floats (row-major)
+ * @returns {number[]} - Array of 21 floats: passive joint angles
+ */
+export function calculatePassiveJoints(headJoints, headPoseMatrix) {
+  if (!headJoints || headJoints.length < 7 || !headPoseMatrix || headPoseMatrix.length < 16) {
+    return new Array(21).fill(0);
+  }
+  
+  const bodyYaw = headJoints[0];
+  const motors = KINEMATICS_CONFIG.MOTORS;
+  
+  // Build pose matrix and add head Z offset
+  const pose = [
+    [headPoseMatrix[0], headPoseMatrix[1], headPoseMatrix[2], headPoseMatrix[3]],
+    [headPoseMatrix[4], headPoseMatrix[5], headPoseMatrix[6], headPoseMatrix[7]],
+    [headPoseMatrix[8], headPoseMatrix[9], headPoseMatrix[10], headPoseMatrix[11] + KINEMATICS_CONFIG.HEAD_Z_OFFSET],
+    [0, 0, 0, 1]
+  ];
+  
+  // Apply inverse body yaw rotation
+  const cosYaw = Math.cos(bodyYaw);
+  const sinYaw = Math.sin(bodyYaw);
+  const rZInv = [
+    [cosYaw, sinYaw, 0],
+    [-sinYaw, cosYaw, 0],
+    [0, 0, 1]
+  ];
+  
+  // Rotate pose
+  const poseRot = [
+    [pose[0][0], pose[0][1], pose[0][2]],
+    [pose[1][0], pose[1][1], pose[1][2]],
+    [pose[2][0], pose[2][1], pose[2][2]]
+  ];
+  const poseTrans = [pose[0][3], pose[1][3], pose[2][3]];
+  const rotatedPoseRot = multiplyMatrix3(rZInv, poseRot);
+  const rotatedPoseTrans = multiplyMatrixVector3(rZInv, poseTrans);
+  
+  // Pre-compute passive correction rotations
+  const passiveCorrections = KINEMATICS_CONFIG.PASSIVE_ORIENTATION_OFFSET.map(offset => 
+    rotationFromEulerXYZ(offset[0], offset[1], offset[2])
+  );
+  
+  const passiveJoints = new Array(21).fill(0);
+  let lastRServoBranch = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+  let lastRWorldServo = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+  
+  // For each of the 6 stewart motors
+  for (let i = 0; i < 6; i++) {
+    const motor = motors[i];
+    const stewartJoint = headJoints[i + 1];
+    
+    // Calculate branch position on platform in world frame
+    const branchPos = motor.branchPosition;
+    const branchPosWorld = [
+      rotatedPoseRot[0][0] * branchPos[0] + rotatedPoseRot[0][1] * branchPos[1] + rotatedPoseRot[0][2] * branchPos[2] + rotatedPoseTrans[0],
+      rotatedPoseRot[1][0] * branchPos[0] + rotatedPoseRot[1][1] * branchPos[1] + rotatedPoseRot[1][2] * branchPos[2] + rotatedPoseTrans[1],
+      rotatedPoseRot[2][0] * branchPos[0] + rotatedPoseRot[2][1] * branchPos[1] + rotatedPoseRot[2][2] * branchPos[2] + rotatedPoseTrans[2]
+    ];
+    
+    // Compute servo rotation (rotating around Z axis)
+    const cosZ = Math.cos(stewartJoint);
+    const sinZ = Math.sin(stewartJoint);
+    const rServo = [
+      [cosZ, -sinZ, 0],
+      [sinZ, cosZ, 0],
+      [0, 0, 1]
+    ];
+    
+    // T_world_motor from motor data
+    const tWorldMotor = motor.tWorldMotor;
+    const tWorldMotorRot = [
+      [tWorldMotor[0][0], tWorldMotor[0][1], tWorldMotor[0][2]],
+      [tWorldMotor[1][0], tWorldMotor[1][1], tWorldMotor[1][2]],
+      [tWorldMotor[2][0], tWorldMotor[2][1], tWorldMotor[2][2]]
+    ];
+    const tWorldMotorTrans = [tWorldMotor[0][3], tWorldMotor[1][3], tWorldMotor[2][3]];
+    
+    // Compute world servo arm position
+    const servoArmLocal = [KINEMATICS_CONFIG.MOTOR_ARM_LENGTH, 0, 0];
+    const servoPosLocal = multiplyMatrixVector3(rServo, servoArmLocal);
+    const pWorldServoArm = [
+      tWorldMotorRot[0][0] * servoPosLocal[0] + tWorldMotorRot[0][1] * servoPosLocal[1] + tWorldMotorRot[0][2] * servoPosLocal[2] + tWorldMotorTrans[0],
+      tWorldMotorRot[1][0] * servoPosLocal[0] + tWorldMotorRot[1][1] * servoPosLocal[1] + tWorldMotorRot[1][2] * servoPosLocal[2] + tWorldMotorTrans[1],
+      tWorldMotorRot[2][0] * servoPosLocal[0] + tWorldMotorRot[2][1] * servoPosLocal[1] + tWorldMotorRot[2][2] * servoPosLocal[2] + tWorldMotorTrans[2]
+    ];
+    
+    // Apply passive correction to orientation
+    const rWorldServo = multiplyMatrix3(multiplyMatrix3(tWorldMotorRot, rServo), passiveCorrections[i]);
+    
+    // Vector from servo arm to branch in world frame
+    const vecServoToBranch = [
+      branchPosWorld[0] - pWorldServoArm[0],
+      branchPosWorld[1] - pWorldServoArm[1],
+      branchPosWorld[2] - pWorldServoArm[2]
+    ];
+    
+    // Transform to servo frame
+    const rWorldServoT = transposeMatrix3(rWorldServo);
+    const vecServoToBranchInServo = multiplyMatrixVector3(rWorldServoT, vecServoToBranch);
+    
+    // Rod direction in passive frame
+    const rodDir = KINEMATICS_CONFIG.STEWART_ROD_DIR_IN_PASSIVE_FRAME[i];
+    
+    // Normalize and get straight line direction
+    const straightLineDir = normalizeVector3(vecServoToBranchInServo);
+    
+    // Align rod direction to actual direction
+    const rServoBranch = alignVectors(rodDir, straightLineDir);
+    const euler = eulerFromRotationXYZ(rServoBranch);
+    
+    passiveJoints[i * 3] = euler[0];
+    passiveJoints[i * 3 + 1] = euler[1];
+    passiveJoints[i * 3 + 2] = euler[2];
+    
+    // Save for 7th passive joint calculation
+    if (i === 5) {
+      lastRServoBranch = rServoBranch;
+      lastRWorldServo = rWorldServo;
+    }
+  }
+  
+  // 7th passive joint (XL330 on the head)
+  const tHeadXl330Rot = [
+    [KINEMATICS_CONFIG.T_HEAD_XL_330[0][0], KINEMATICS_CONFIG.T_HEAD_XL_330[0][1], KINEMATICS_CONFIG.T_HEAD_XL_330[0][2]],
+    [KINEMATICS_CONFIG.T_HEAD_XL_330[1][0], KINEMATICS_CONFIG.T_HEAD_XL_330[1][1], KINEMATICS_CONFIG.T_HEAD_XL_330[1][2]],
+    [KINEMATICS_CONFIG.T_HEAD_XL_330[2][0], KINEMATICS_CONFIG.T_HEAD_XL_330[2][1], KINEMATICS_CONFIG.T_HEAD_XL_330[2][2]]
+  ];
+  const rHeadXl330 = multiplyMatrix3(rotatedPoseRot, tHeadXl330Rot);
+  
+  // Current rod orientation with correction for 7th passive joint
+  const rRodCurrent = multiplyMatrix3(multiplyMatrix3(lastRWorldServo, lastRServoBranch), passiveCorrections[6]);
+  
+  // Compute relative rotation
+  const rDof = multiplyMatrix3(transposeMatrix3(rRodCurrent), rHeadXl330);
+  const euler7 = eulerFromRotationXYZ(rDof);
+  
+  passiveJoints[18] = euler7[0];
+  passiveJoints[19] = euler7[1];
+  passiveJoints[20] = euler7[2];
+  
+  return passiveJoints;
+}
+
 // Log card info
 console.info(
   `%c REACHY-MINI-3D-CARD %c v${CARD_VERSION} `,
@@ -1210,6 +1679,24 @@ class ReachyMini3DCard extends HTMLElement {
     if (data.body_yaw !== undefined) {
       // body_yaw is also in head_joints[0], but keep for reference
       this._robotState.bodyYaw = data.body_yaw;
+    }
+    
+    // Parse head_pose and calculate passive joints
+    // API returns head_pose as {x, y, z, roll, pitch, yaw}
+    // We need to convert to 4x4 matrix and calculate passive joints
+    if (data.head_pose && typeof data.head_pose === 'object') {
+      // Convert head_pose to 4x4 matrix
+      const headPoseMatrix = headPoseToMatrix(data.head_pose);
+      this._robotState.headPose = headPoseMatrix;
+      
+      // Calculate passive joints from head_joints and head_pose
+      if (this._robotState.headJoints && headPoseMatrix) {
+        const enablePassiveJoints = this._config?.enable_passive_joints ?? DEFAULT_CONFIG.enable_passive_joints;
+        if (enablePassiveJoints) {
+          const passiveJoints = calculatePassiveJoints(this._robotState.headJoints, headPoseMatrix);
+          this._robotState.passiveJoints = passiveJoints;
+        }
+      }
     }
     
     // Apply state to robot model
