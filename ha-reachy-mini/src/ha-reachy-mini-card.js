@@ -251,7 +251,7 @@ export function calculateCardSize(height) {
 
 /**
  * Build WebSocket URL from configuration
- * URL format: ws://{daemon_host}:{daemon_port}/api/state/ws/full?frequency=20&with_head_joints=true&with_antenna_positions=true&with_passive_joints=true
+ * URL format: ws://{daemon_host}:{daemon_port}/api/state/ws/full?frequency=20&with_head_pose=true&use_pose_matrix=true&with_head_joints=true&with_antenna_positions=true&with_passive_joints=true
  * Requirements: 2.1, 2.2, 2.3
  * 
  * @param {string} daemonHost - The daemon host address
@@ -265,6 +265,8 @@ export function buildWebSocketUrl(daemonHost, daemonPort) {
   const baseUrl = `ws://${host}:${port}/api/state/ws/full`;
   const params = new URLSearchParams({
     frequency: WEBSOCKET_CONFIG.frequency.toString(),
+    with_head_pose: 'true',
+    use_pose_matrix: 'true',
     with_head_joints: 'true',
     with_antenna_positions: 'true',
     with_passive_joints: 'true'
