@@ -3,5 +3,5 @@
   "render_readme": true,
   "filename": "dist/ha-reachy-mini-card.js",
   "homeassistant": "2025.1.0",
-  "content_in_root": false
+  "zip_release": false
 }
