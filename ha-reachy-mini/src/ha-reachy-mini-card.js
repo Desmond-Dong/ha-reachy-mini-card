@@ -436,6 +436,25 @@ class ReachyMini3DCard extends HTMLElement {
   }
 
   /**
+   * Return the configuration element for the card editor
+   * This enables the visual configuration UI in Home Assistant
+   */
+  static getConfigElement() {
+    return document.createElement('ha-reachy-mini-card-editor');
+  }
+
+  /**
+   * Return stub config for the card picker
+   */
+  static getStubConfig() {
+    return {
+      daemon_host: 'localhost',
+      daemon_port: 8000,
+      height: 400
+    };
+  }
+
+  /**
    * Called when element is added to the DOM
    */
   connectedCallback() {
@@ -1821,6 +1840,176 @@ export function calculateExpectedPassiveJointMapping(passiveJoints, enablePassiv
 
   return mapping;
 }
+
+/**
+ * Configuration editor for Reachy Mini 3D Card
+ * Provides a visual UI for editing card configuration in Home Assistant
+ */
+class ReachyMini3DCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    this._config = {};
+    this._hass = null;
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+  }
+
+  setConfig(config) {
+    this._config = { ...DEFAULT_CONFIG, ...config };
+    this._render();
+  }
+
+  _render() {
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: 'open' });
+    }
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        .card-config {
+          padding: 16px;
+        }
+        .config-row {
+          display: flex;
+          align-items: center;
+          margin-bottom: 16px;
+        }
+        .config-row label {
+          flex: 1;
+          font-weight: 500;
+        }
+        .config-row input[type="text"],
+        .config-row input[type="number"] {
+          flex: 1;
+          padding: 8px;
+          border: 1px solid var(--divider-color, #e0e0e0);
+          border-radius: 4px;
+          background: var(--card-background-color, #fff);
+          color: var(--primary-text-color, #212121);
+        }
+        .config-row input[type="checkbox"] {
+          width: 20px;
+          height: 20px;
+        }
+        .section-title {
+          font-weight: 600;
+          margin: 16px 0 8px 0;
+          padding-bottom: 4px;
+          border-bottom: 1px solid var(--divider-color, #e0e0e0);
+        }
+        .help-text {
+          font-size: 12px;
+          color: var(--secondary-text-color, #757575);
+          margin-top: 4px;
+        }
+      </style>
+      <div class="card-config">
+        <div class="section-title">Connection</div>
+        
+        <div class="config-row">
+          <label for="daemon_host">Daemon Host</label>
+          <input type="text" id="daemon_host" 
+            value="${this._config.daemon_host || ''}" 
+            placeholder="localhost">
+        </div>
+        
+        <div class="config-row">
+          <label for="daemon_port">Daemon Port</label>
+          <input type="number" id="daemon_port" 
+            value="${this._config.daemon_port || 8000}" 
+            min="1" max="65535">
+        </div>
+        
+        <div class="section-title">Appearance</div>
+        
+        <div class="config-row">
+          <label for="height">Card Height (px)</label>
+          <input type="number" id="height" 
+            value="${this._config.height || 400}" 
+            min="100" max="2000">
+        </div>
+        
+        <div class="config-row">
+          <label for="background_color">Background Color</label>
+          <input type="text" id="background_color" 
+            value="${this._config.background_color || '#f5f5f5'}" 
+            placeholder="#f5f5f5">
+        </div>
+        
+        <div class="config-row">
+          <label for="camera_distance">Camera Distance</label>
+          <input type="number" id="camera_distance" 
+            value="${this._config.camera_distance || 0.5}" 
+            min="0.2" max="1.5" step="0.1">
+        </div>
+        
+        <div class="section-title">Features</div>
+        
+        <div class="config-row">
+          <label for="enable_grid">Show Grid</label>
+          <input type="checkbox" id="enable_grid" 
+            ${this._config.enable_grid !== false ? 'checked' : ''}>
+        </div>
+        
+        <div class="config-row">
+          <label for="enable_passive_joints">Show Passive Joints</label>
+          <input type="checkbox" id="enable_passive_joints" 
+            ${this._config.enable_passive_joints !== false ? 'checked' : ''}>
+        </div>
+        
+        <div class="config-row">
+          <label for="enable_head_pose">Enable Head Pose</label>
+          <input type="checkbox" id="enable_head_pose" 
+            ${this._config.enable_head_pose !== false ? 'checked' : ''}>
+        </div>
+      </div>
+    `;
+
+    // Add event listeners
+    this.shadowRoot.querySelectorAll('input').forEach(input => {
+      input.addEventListener('change', (e) => this._valueChanged(e));
+      input.addEventListener('input', (e) => {
+        // Debounce text inputs
+        if (e.target.type === 'text' || e.target.type === 'number') {
+          clearTimeout(this._debounceTimer);
+          this._debounceTimer = setTimeout(() => this._valueChanged(e), 300);
+        }
+      });
+    });
+  }
+
+  _valueChanged(ev) {
+    const target = ev.target;
+    const configKey = target.id;
+    let value;
+
+    if (target.type === 'checkbox') {
+      value = target.checked;
+    } else if (target.type === 'number') {
+      value = parseFloat(target.value);
+      if (isNaN(value)) return;
+    } else {
+      value = target.value;
+    }
+
+    if (this._config[configKey] === value) return;
+
+    const newConfig = { ...this._config, [configKey]: value };
+    
+    // Fire config-changed event
+    const event = new CustomEvent('config-changed', {
+      detail: { config: newConfig },
+      bubbles: true,
+      composed: true
+    });
+    this.dispatchEvent(event);
+  }
+}
+
+// Register the editor element
+customElements.define('ha-reachy-mini-card-editor', ReachyMini3DCardEditor);
 
 // Register the custom element
 customElements.define('ha-reachy-mini-card', ReachyMini3DCard);
