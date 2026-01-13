@@ -250,30 +250,31 @@ export function calculateCardSize(height) {
 }
 
 /**
- * Build WebSocket URL from configuration
- * URL format: ws://{daemon_host}:{daemon_port}/api/state/ws/full?frequency=20&with_head_pose=true&use_pose_matrix=true&with_head_joints=true&with_antenna_positions=true&with_passive_joints=true
+ * Build HTTP API URL from configuration
+ * URL format: http://{daemon_host}:{daemon_port}/api/state/full?with_control_mode=true&with_head_joints=true&with_body_yaw=true&with_antenna_positions=true
  * Requirements: 2.1, 2.2, 2.3
  * 
  * @param {string} daemonHost - The daemon host address
  * @param {number} daemonPort - The daemon port number
- * @returns {string} - The constructed WebSocket URL
+ * @returns {string} - The constructed HTTP URL
  */
-export function buildWebSocketUrl(daemonHost, daemonPort) {
+export function buildApiUrl(daemonHost, daemonPort) {
   const host = daemonHost || DEFAULT_CONFIG.daemon_host;
   const port = daemonPort || DEFAULT_CONFIG.daemon_port;
   
-  const baseUrl = `ws://${host}:${port}/api/state/ws/full`;
+  const baseUrl = `http://${host}:${port}/api/state/full`;
   const params = new URLSearchParams({
-    frequency: WEBSOCKET_CONFIG.frequency.toString(),
-    with_head_pose: 'true',
-    use_pose_matrix: 'true',
+    with_control_mode: 'true',
     with_head_joints: 'true',
-    with_antenna_positions: 'true',
-    with_passive_joints: 'true'
+    with_body_yaw: 'true',
+    with_antenna_positions: 'true'
   });
   
   return `${baseUrl}?${params.toString()}`;
 }
+
+// Keep old function name for backward compatibility with tests
+export const buildWebSocketUrl = buildApiUrl;
 
 /**
  * Parse robot state message from WebSocket
@@ -398,6 +399,9 @@ class ReachyMini3DCard extends HTMLElement {
     // Visibility observer
     this._intersectionObserver = null;
     this._isVisible = true;
+    
+    // HTTP polling interval
+    this._pollingInterval = null;
     
     // Render loop throttling (Requirement 5.1)
     // Target 20Hz to match WebSocket frequency
@@ -1117,51 +1121,129 @@ class ReachyMini3DCard extends HTMLElement {
   }
 
   /**
-   * Connect to the Reachy Mini daemon via WebSocket
+   * Connect to the Reachy Mini daemon via HTTP polling
    * Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.7
    */
   _connectWebSocket() {
-    // Don't connect if already connected or connecting
-    if (this._ws && (this._ws.readyState === WebSocket.CONNECTING || this._ws.readyState === WebSocket.OPEN)) {
+    // Start HTTP polling instead of WebSocket
+    this._startPolling();
+  }
+
+  /**
+   * Start HTTP polling for robot state
+   * Polls at 20Hz (50ms interval) to match the original WebSocket frequency
+   */
+  _startPolling() {
+    // Don't start if already polling
+    if (this._pollingInterval) {
       return;
     }
     
     const host = this._config?.daemon_host ?? DEFAULT_CONFIG.daemon_host;
     const port = this._config?.daemon_port ?? DEFAULT_CONFIG.daemon_port;
-    const url = buildWebSocketUrl(host, port);
+    const url = buildApiUrl(host, port);
     
-    console.info(`[ReachyMini3DCard] Connecting to WebSocket: ${url}`);
+    console.info(`[ReachyMini3DCard] Starting HTTP polling: ${url}`);
     
+    // Poll immediately
+    this._pollRobotState(url);
+    
+    // Then poll at 20Hz (50ms interval)
+    this._pollingInterval = setInterval(() => {
+      this._pollRobotState(url);
+    }, 50);
+  }
+
+  /**
+   * Poll robot state via HTTP
+   * @param {string} url - The API URL to poll
+   */
+  async _pollRobotState(url) {
     try {
-      this._ws = new WebSocket(url);
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
       
-      this._ws.onopen = () => {
-        console.info('[ReachyMini3DCard] WebSocket connected');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Update connection state on success
+      if (this._connectionState !== 'connected') {
         this._reconnectAttempts = 0;
         this._setConnectionState('connected');
-      };
+      }
       
-      this._ws.onmessage = (event) => {
-        this._handleWebSocketMessage(event);
-      };
-      
-      this._ws.onerror = (error) => {
-        console.error('[ReachyMini3DCard] WebSocket error:', error);
-      };
-      
-      this._ws.onclose = (event) => {
-        console.info(`[ReachyMini3DCard] WebSocket closed: code=${event.code}, reason=${event.reason}`);
-        this._handleWebSocketClose();
-      };
+      // Parse and apply robot state
+      this._handlePollingResponse(data);
       
     } catch (error) {
-      console.error('[ReachyMini3DCard] Failed to create WebSocket:', error);
-      this._setConnectionState('disconnected');
+      // Handle connection error
+      if (this._connectionState === 'connected') {
+        console.warn('[ReachyMini3DCard] Polling error:', error.message);
+        this._handlePollingError();
+      }
     }
   }
 
   /**
-   * Handle WebSocket message
+   * Handle HTTP polling response
+   * @param {Object} data - Response data from API
+   */
+  _handlePollingResponse(data) {
+    // Parse head_joints
+    if (data.head_joints && Array.isArray(data.head_joints) && data.head_joints.length === 7) {
+      this._robotState.headJoints = data.head_joints;
+    }
+    
+    // Parse antennas_position
+    if (data.antennas_position && Array.isArray(data.antennas_position)) {
+      this._robotState.antennas = data.antennas_position;
+    }
+    
+    // Parse body_yaw (if available separately)
+    if (data.body_yaw !== undefined) {
+      // body_yaw is also in head_joints[0], but keep for reference
+      this._robotState.bodyYaw = data.body_yaw;
+    }
+    
+    // Apply state to robot model
+    this._applyRobotState();
+  }
+
+  /**
+   * Handle HTTP polling error with reconnection logic
+   */
+  _handlePollingError() {
+    this._reconnectAttempts++;
+    
+    if (this._reconnectAttempts < WEBSOCKET_CONFIG.maxReconnectAttempts) {
+      this._setConnectionState('reconnecting');
+    } else {
+      // Max retries exceeded
+      console.warn('[ReachyMini3DCard] Max polling errors reached, stopping');
+      this._setConnectionState('disconnected');
+      this._stopPolling();
+    }
+  }
+
+  /**
+   * Stop HTTP polling
+   */
+  _stopPolling() {
+    if (this._pollingInterval) {
+      clearInterval(this._pollingInterval);
+      this._pollingInterval = null;
+    }
+  }
+
+  /**
+   * Handle WebSocket message (kept for backward compatibility)
    * Requirement: 2.6
    * @param {MessageEvent} event - WebSocket message event
    */
@@ -1236,7 +1318,10 @@ class ReachyMini3DCard extends HTMLElement {
       this._reconnectTimeout = null;
     }
     
-    // Close WebSocket
+    // Stop HTTP polling
+    this._stopPolling();
+    
+    // Close WebSocket (legacy, kept for compatibility)
     if (this._ws) {
       this._ws.onclose = null; // Prevent reconnection attempt
       this._ws.close();
@@ -1462,13 +1547,16 @@ class ReachyMini3DCard extends HTMLElement {
     // Stop animation loop using the dedicated method
     this._stopRenderLoop();
     
+    // Stop HTTP polling
+    this._stopPolling();
+    
     // Clear reconnection timeout
     if (this._reconnectTimeout) {
       clearTimeout(this._reconnectTimeout);
       this._reconnectTimeout = null;
     }
     
-    // Close WebSocket
+    // Close WebSocket (legacy, kept for compatibility)
     if (this._ws) {
       this._ws.onclose = null; // Prevent reconnection attempt
       this._ws.close();
